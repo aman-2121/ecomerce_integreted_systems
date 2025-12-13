@@ -1,0 +1,22 @@
+﻿# SECRETS - NEVER COMMIT
+.env
+.env.local
+.env*.local
+*.env.backup
+.env.backup
+
+# Dependencies
+node_modules/
+
+# Build
+dist/
+build/
+out/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

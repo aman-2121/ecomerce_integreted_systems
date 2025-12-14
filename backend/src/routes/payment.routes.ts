@@ -7,7 +7,8 @@ import {
   getPaymentMethods,
   addPaymentMethod,
   updatePaymentMethod,
-  deletePaymentMethod
+  deletePaymentMethod,
+  chapaWebhook
 } from '../controllers/payment.controller';
 import { authMiddleware } from '../middleware/auth';
 
@@ -15,7 +16,7 @@ const router = Router();
 
 router.post('/initiate', authMiddleware, initiatePayment);
 router.post('/callback', paymentCallback);
-router.post('/chapa-webhook', paymentCallback); // Chapa webhook endpoint
+router.post('/chapa-webhook', chapaWebhook); // Chapa webhook endpoint
 router.get('/status/:orderId', authMiddleware, getPaymentStatus);
 
 // Payment methods routes

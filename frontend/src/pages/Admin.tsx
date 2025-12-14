@@ -636,7 +636,7 @@ const Admin: React.FC = () => {
                   {orders.map(order => (
                     <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">#{order.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{order.user.name}<br/><small className="text-gray-500 dark:text-gray-400">{order.user.email}</small></td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{order.user?.name || 'Unknown'}<br/><small className="text-gray-500 dark:text-gray-400">{order.user?.email || 'N/A'}</small></td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600 dark:text-green-400">${safePrice(order.totalAmount)}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select value={order.status} onChange={e => updateOrderStatus(order.id, e.target.value)} className="border border-gray-300 dark:border-gray-600 rounded px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">

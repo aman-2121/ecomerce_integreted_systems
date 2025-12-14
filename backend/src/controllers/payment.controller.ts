@@ -163,3 +163,42 @@ export const deletePaymentMethod = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: 'Failed to delete payment method' });
   }
 };
+
+export const chapaWebhook = async (req: Request, res: Response) => {
+  try {
+    const { tx_ref, status, amount } = req.body;
+
+    console.log('Chapa Webhook received:', { tx_ref, status, amount });
+
+    // Find the payment record by transaction reference
+    const payment = await Payment.findOne({ where: { transactionId: tx_ref } });
+    if (!payment) {
+      console.error('Payment not found for tx_ref:', tx_ref);
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+
+    // Find the associated order
+    const order = await Order.findByPk(payment.orderId);
+    if (!order) {
+      console.error('Order not found for payment:', payment.id);
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Update payment and order status based on webhook data
+    if (status === 'success') {
+      await payment.update({ status: 'completed' });
+      await order.update({ paymentStatus: 'paid' });
+      console.log('Payment completed successfully for tx_ref:', tx_ref);
+    } else {
+      await payment.update({ status: 'failed' });
+      await order.update({ paymentStatus: 'failed' });
+      console.log('Payment failed for tx_ref:', tx_ref);
+    }
+
+    // Respond to Chapa to acknowledge receipt
+    res.status(200).json({ message: 'Webhook processed successfully' });
+  } catch (error: any) {
+    console.error('Chapa webhook error:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+};

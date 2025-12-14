@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { orderAPI, paymentAPI } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 interface CheckoutForm {
   shippingAddress: string;
@@ -10,7 +11,7 @@ interface CheckoutForm {
   postalCode: string;
   country: string;
   phone: string;
-  paymentMethod: 'telebirr';
+  paymentMethod: 'chapa';
 }
 
 const Checkout: React.FC = () => {
@@ -18,7 +19,13 @@ const Checkout: React.FC = () => {
   const { items: cartItems, getTotal } = useCart();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Debug logging for cart items
+  console.log('Checkout: Cart items received:', cartItems);
+  console.log('Checkout: Cart items length:', cartItems.length);
+  console.log('Checkout: Cart total:', getTotal());
 
   const [formData, setFormData] = useState<CheckoutForm>({
     shippingAddress: '',
@@ -26,7 +33,7 @@ const Checkout: React.FC = () => {
     postalCode: '',
     country: '',
     phone: '',
-    paymentMethod: 'telebirr'
+    paymentMethod: 'chapa'
   });
 
   // Calculate totals
@@ -42,6 +49,37 @@ const Checkout: React.FC = () => {
     });
   };
 
+  useEffect(() => {
+    const verifyToken = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:5000/api/auth/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          localStorage.removeItem('token');
+          navigate('/login');
+          return;
+        }
+
+        setAuthLoading(false);
+      } catch (error) {
+        localStorage.removeItem('token');
+        navigate('/login');
+      }
+    };
+
+    verifyToken();
+  }, [navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -52,7 +90,7 @@ const Checkout: React.FC = () => {
       const orderItems = cartItems.map((item: any) => ({
         productId: item.productId,
         quantity: item.quantity,
-        unitPrice: item.price
+        price: item.price
       }));
 
       // Create order
@@ -65,10 +103,14 @@ const Checkout: React.FC = () => {
       const orderId = orderResponse.data.order.id;
 
       // Initiate payment
-      const paymentResponse = await paymentAPI.initiate({ orderId });
+      const paymentResponse = await paymentAPI.initiate({
+        orderId,
+        amount: total,
+        email: user?.email || ''
+      });
 
-      // Redirect to Telebirr payment page
-      window.location.href = paymentResponse.data.paymentUrl;
+      // Redirect to Chapa payment page
+      window.location.href = paymentResponse.data.checkout_url;
 
     } catch (err: any) {
       setError(err.response?.data?.error || 'Checkout failed');
@@ -78,7 +120,6 @@ const Checkout: React.FC = () => {
   };
 
   if (!user) {
-    navigate('/login');
     return null;
   }
 
@@ -196,22 +237,22 @@ const Checkout: React.FC = () => {
                 <div className="flex items-center space-x-3 p-4 border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <input
                     type="radio"
-                    id="telebirr"
+                    id="chapa"
                     name="paymentMethod"
-                    value="telebirr"
-                    checked={formData.paymentMethod === 'telebirr'}
+                    value="chapa"
+                    checked={formData.paymentMethod === 'chapa'}
                     onChange={handleChange}
                     className="text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                   />
-                  <label htmlFor="telebirr" className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-green-600 rounded flex items-center justify-center">
-                      <span className="text-white font-bold text-sm">T</span>
+                  <label htmlFor="chapa" className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">C</span>
                     </div>
-                    <span className="font-medium text-gray-900 dark:text-white">Telebirr</span>
+                    <span className="font-medium text-gray-900 dark:text-white">Chapa Payment</span>
                   </label>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mt-3">
-                  You will be redirected to Telebirr to complete your payment securely.
+                  You will be redirected to Chapa to complete your payment securely. Multiple payment options available including cards, mobile money, and bank transfers.
                 </p>
               </div>
             </div>
@@ -268,16 +309,18 @@ const Checkout: React.FC = () => {
               <div className="card-footer">
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="btn-primary w-full py-3 text-lg"
+                  disabled={loading || cartItems.length === 0}
+                  className="btn-primary w-full py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                       Processing...
                     </div>
+                  ) : cartItems.length === 0 ? (
+                    'Add items to cart to checkout'
                   ) : (
-                    `Pay with Telebirr - $${total.toFixed(2)}`
+                    `Pay with Chapa - $${total.toFixed(2)}`
                   )}
                 </button>
 

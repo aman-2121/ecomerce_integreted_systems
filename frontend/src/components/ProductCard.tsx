@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 interface Product {
   id: number;
@@ -17,6 +18,7 @@ interface Product {
 
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const { addToCart } = useCart();
+  const { user } = useAuth();
 
   const formatPrice = (price: any) => {
     const num = typeof price === 'string' ? parseFloat(price) : price;
@@ -24,6 +26,14 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   };
 
   const handleAddToCart = () => {
+    if (!user) {
+      // Store current location for redirect after login
+      localStorage.setItem('redirectAfterLogin', window.location.pathname);
+      // Navigate to login
+      window.location.href = '/login';
+      return;
+    }
+
     addToCart({
       productId: product.id,
       name: product.name,

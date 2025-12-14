@@ -36,45 +36,100 @@ interface CartProviderProps {
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        setItems(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Error loading cart from localStorage:', error);
+    console.log('CartContext: Initializing cart from localStorage');
+    try {
+      const savedCart = localStorage.getItem('cart');
+      console.log('CartContext: Raw localStorage data:', savedCart);
+
+      if (savedCart && savedCart !== 'undefined' && savedCart !== 'null') {
+        const parsedCart = JSON.parse(savedCart);
+        console.log('CartContext: Parsed cart items:', parsedCart);
+
+        if (Array.isArray(parsedCart)) {
+          // Validate cart items
+          const validItems = parsedCart.filter(item => {
+            const isValid = item &&
+              typeof item.id === 'string' &&
+              typeof item.productId === 'number' &&
+              typeof item.name === 'string' &&
+              typeof item.price === 'number' &&
+              typeof item.quantity === 'number' &&
+              typeof item.image === 'string' &&
+              typeof item.stock === 'number';
+
+            if (!isValid) {
+              console.warn('CartContext: Invalid cart item found:', item);
+            }
+            return isValid;
+          });
+
+          console.log('CartContext: Valid cart items:', validItems);
+          setItems(validItems);
+        } else {
+          console.warn('CartContext: Cart data is not an array, resetting to empty');
+          setItems([]);
+        }
+      } else {
+        console.log('CartContext: No valid cart data found in localStorage');
+        setItems([]);
       }
+    } catch (error) {
+      console.error('CartContext: Error loading cart from localStorage:', error);
+      setItems([]);
+    } finally {
+      setIsInitialized(true);
+      console.log('CartContext: Cart initialization complete');
     }
   }, []);
 
   // Save cart to localStorage whenever items change
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
-  }, [items]);
+    if (isInitialized) {
+      try {
+        const cartData = JSON.stringify(items);
+        localStorage.setItem('cart', cartData);
+        console.log('CartContext: Saved cart to localStorage:', items);
+      } catch (error) {
+        console.error('CartContext: Error saving cart to localStorage:', error);
+      }
+    }
+  }, [items, isInitialized]);
 
   const addToCart = (newItem: Omit<CartItem, 'id'>) => {
+    console.log('CartContext: addToCart called with item:', newItem);
+
     setItems(currentItems => {
+      console.log('CartContext: Current cart items before add:', currentItems);
+
       const existingItem = currentItems.find(item =>
         item.productId === newItem.productId
       );
 
+      let newItems;
       if (existingItem) {
+        console.log('CartContext: Updating existing item quantity');
         // Update quantity if item already exists
-        return currentItems.map(item =>
+        newItems = currentItems.map(item =>
           item.productId === newItem.productId
             ? { ...item, quantity: item.quantity + newItem.quantity }
             : item
         );
       } else {
+        console.log('CartContext: Adding new item to cart');
         // Add new item with generated ID
         const itemWithId: CartItem = {
           ...newItem,
           id: `${newItem.productId}-${Date.now()}`
         };
-        return [...currentItems, itemWithId];
+        newItems = [...currentItems, itemWithId];
       }
+
+      console.log('CartContext: New cart items after add:', newItems);
+      return newItems;
     });
   };
 

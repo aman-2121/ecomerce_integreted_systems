@@ -2,11 +2,17 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { productAPI } from '../api/auth';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  const [addedToCart, setAddedToCart] = useState(false);
+  const { addToCart } = useCart();
+  const { user } = useAuth();
 
   useEffect(() => {
     productAPI.getById(id!).then(res => {
@@ -23,9 +29,39 @@ const ProductDetail: React.FC = () => {
     return isNaN(num) ? '0.00' : num.toFixed(2);
   };
 
-  const imageUrl = product.image 
-    ? `data:image/jpeg;base64,${product.image}` 
+  const imageUrl = product.image
+    ? `data:image/jpeg;base64,${product.image}`
     : 'https://via.placeholder.com/600x600.png?text=No+Image';
+
+  const handleAddToCart = () => {
+    if (!user) {
+      // Store current location for redirect after login
+      localStorage.setItem('redirectAfterLogin', window.location.pathname);
+      // Navigate to login
+      window.location.href = '/login';
+      return;
+    }
+
+    if (product && quantity > 0) {
+      addToCart({
+        productId: product.id,
+        name: product.name,
+        price: parseFloat(product.price),
+        quantity: quantity,
+        image: product.image || '',
+        stock: product.stock
+      });
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 2000);
+      // Removed automatic redirect to cart page - user can navigate manually
+    }
+  };
+
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity >= 1 && newQuantity <= product.stock) {
+      setQuantity(newQuantity);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto py-16 px-6">
@@ -57,12 +93,64 @@ const ProductDetail: React.FC = () => {
             )}
           </div>
 
-          <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white text-2xl font-bold py-6 rounded-2xl hover:from-blue-700 hover:to-purple-700 transition transform hover:scale-105 shadow-2xl">
-            Add to Cart
-          </button>
+          {product.stock > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <label htmlFor="quantity" className="text-lg font-medium text-gray-700 dark:text-gray-300">
+                  Quantity:
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleQuantityChange(quantity - 1)}
+                    disabled={quantity <= 1}
+                    className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    id="quantity"
+                    value={quantity}
+                    onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+                    min="1"
+                    max={product.stock}
+                    className="w-16 text-center px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                  <button
+                    onClick={() => handleQuantityChange(quantity + 1)}
+                    disabled={quantity >= product.stock}
+                    className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <button
+                onClick={handleAddToCart}
+                disabled={addedToCart}
+                className={`w-full text-2xl font-bold py-6 rounded-2xl transition transform hover:scale-105 shadow-2xl ${
+                  addedToCart
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                }`}
+              >
+                {addedToCart ? '✓ Added to Cart!' : 'Add to Cart'}
+              </button>
+            </div>
+          )}
+
+          {product.stock === 0 && (
+            <button
+              disabled
+              className="w-full bg-gray-400 text-white text-2xl font-bold py-6 rounded-2xl cursor-not-allowed"
+            >
+              Out of Stock
+            </button>
+          )}
         </div>
       </div>
-    </div>
+     </div>
   );
 };
 

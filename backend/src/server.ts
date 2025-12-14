@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import { connectDB } from './config/database';
 import { runMigrations } from './utils/migrationRunner';
 import app from './app';
+// Import models to initialize associations
+import './models';
 
 dotenv.config();
 

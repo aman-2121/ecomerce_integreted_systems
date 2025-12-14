@@ -19,11 +19,18 @@ const Login: React.FC = () => {
 
     try {
       const loggedInUser = await login(email, password);
-      // Redirect based on user role
-      if (loggedInUser.role === 'admin') {
-        navigate('/admin');
+      // Check if there's a redirect URL stored
+      const redirectUrl = localStorage.getItem('redirectAfterLogin');
+      if (redirectUrl) {
+        localStorage.removeItem('redirectAfterLogin');
+        navigate(redirectUrl);
       } else {
-        navigate('/');
+        // Redirect based on user role
+        if (loggedInUser.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed');
@@ -109,10 +116,18 @@ const Login: React.FC = () => {
                   const token = credentialResponse.credential;
                   if (token) {
                     googleLogin(token).then((user) => {
-                      if (user.role === 'admin') {
-                        navigate('/admin');
+                      // Check if there's a redirect URL stored
+                      const redirectUrl = localStorage.getItem('redirectAfterLogin');
+                      if (redirectUrl) {
+                        localStorage.removeItem('redirectAfterLogin');
+                        navigate(redirectUrl);
                       } else {
-                        navigate('/');
+                        // Redirect based on user role
+                        if (user.role === 'admin') {
+                          navigate('/admin');
+                        } else {
+                          navigate('/');
+                        }
                       }
                     }).catch((err) => {
                       setError('Google login failed');

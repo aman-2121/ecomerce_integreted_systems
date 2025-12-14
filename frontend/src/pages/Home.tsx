@@ -24,28 +24,45 @@ const Home: React.FC = () => {
 
   return (
     <div className="space-y-16">
-      {/* Hero Section */}
-      <section className="text-center py-20 bg-gradient-to-r from-indigo-600 to-pink-600 dark:from-indigo-800 dark:to-pink-800 rounded-3xl text-white shadow-2xl">
-        <div className="max-w-5xl mx-auto px-6">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in">
-            Welcome to Our E-Commerce Store
-          </h1>
-          <p className="text-xl md:text-2xl mb-10 text-blue-100 max-w-3xl mx-auto">
-            Discover amazing products at great prices. Shop with confidence and enjoy fast delivery.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-6">
-            <Link
-              to="/products"
-              className="bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 text-xl font-bold px-10 py-4 rounded-full transition transform hover:scale-105 shadow-lg"
-            >
-              Shop Now
-            </Link>
-            <Link
-              to="/register"
-              className="border-2 border-white text-white hover:bg-white hover:text-blue-600 dark:hover:bg-gray-800 dark:hover:text-blue-400 text-xl font-bold px-10 py-4 rounded-full transition transform hover:scale-105"
-            >
-              Create Account
-            </Link>
+      {/* Hero Section - FIXED: Removed purple gradient */}
+      <section className="text-center py-20 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl">
+        {/* Your hero section content */}
+        <div className="max-w-6xl mx-auto px-6 py-24">
+          <div className="text-center">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gray-900 dark:text-white">
+              Welcome to <span className="text-blue-600 dark:text-blue-400">ShopWave</span>
+            </h1>
+            
+            <p className="text-xl md:text-2xl mb-10 text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
+              Discover amazing products at great prices.
+            </p>
+            
+            <div className="mb-10">
+              <p className="text-blue-600 dark:text-blue-400 font-semibold text-lg md:text-xl">
+                Free shipping - Easy returns - 5-star service
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row justify-center gap-6 mb-16">
+              <Link
+                to="/products"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold px-12 py-5 rounded-full transition-all duration-300"
+              >
+                Shop Now
+              </Link>
+              
+              <Link
+                to="/register"
+                className="border-2 border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xl font-bold px-12 py-5 rounded-full transition-all duration-300"
+              >
+                Create Account
+              </Link>
+            </div>
+            
+            {/* Featured Products Section Heading */}
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-8">
+              Featured Products
+            </h2>
           </div>
         </div>
       </section>
@@ -81,7 +98,8 @@ const Home: React.FC = () => {
           <div className="text-center mt-12">
             <Link
               to="/products"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 text-white px-10 py-4 rounded-full text-xl font-bold hover:from-blue-700 hover:to-purple-700 dark:hover:from-blue-600 dark:hover:to-purple-600 transition transform hover:scale-105 shadow-xl"
+              // FIXED: Removed purple gradient from button
+              className="bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-10 py-4 rounded-full text-xl font-bold transition transform hover:scale-105 shadow-xl"
             >
               View All Products →
             </Link>
@@ -133,8 +151,8 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="text-center py-20 bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-800 dark:to-blue-800 rounded-3xl text-white">
+      {/* CTA Section - FIXED: Removed purple gradient */}
+      <section className="text-center py-20 bg-blue-600 dark:bg-blue-800 rounded-3xl text-white">
         <h2 className="text-4xl md:text-5xl font-bold mb-6">
           Ready to Start Shopping?
         </h2>

@@ -77,7 +77,7 @@ export const orderAPI = {
 };
 
 export const paymentAPI = {
-  initiate: (data: { orderId: number }) => api.post('/payments/initiate', data),
+  initiate: (data: { orderId: number; amount: number; email: string }) => api.post('/payments/initiate', data),
   getStatus: (orderId: string) => api.get(`/payments/status/${orderId}`),
 };
 

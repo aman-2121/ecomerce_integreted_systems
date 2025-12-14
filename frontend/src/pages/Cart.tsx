@@ -14,7 +14,7 @@ interface CartItem {
 }
 
 const Cart: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { items, removeFromCart, updateQuantity, clearCart } = useCart();
   const [loading, setLoading] = useState(false);
 
@@ -29,10 +29,47 @@ const Cart: React.FC = () => {
   };
 
   const handleCheckout = async () => {
-    if (!user) {
-      alert('Please login to checkout');
+    console.log('handleCheckout called - authLoading:', authLoading, 'user:', user);
+
+    // Check if user has a valid token (more reliable than checking user state)
+    const token = localStorage.getItem('token');
+    console.log('Token from localStorage:', token ? 'exists' : 'null');
+
+    if (!token) {
+      console.log('No token found, redirecting to login');
+      // Store checkout as redirect after login since user was trying to checkout
+      localStorage.setItem('redirectAfterLogin', '/checkout');
+      // Navigate to login
+      window.location.href = '/login';
       return;
     }
+
+    // Verify token is still valid by making a quick API call
+    try {
+      console.log('Verifying token validity...');
+      const response = await fetch('http://localhost:5000/api/auth/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        console.log('Token is invalid, redirecting to login');
+        localStorage.removeItem('token');
+        localStorage.setItem('redirectAfterLogin', '/checkout');
+        window.location.href = '/login';
+        return;
+      }
+
+      console.log('Token is valid, proceeding to checkout');
+    } catch (error) {
+      console.log('Error verifying token:', error);
+      localStorage.removeItem('token');
+      localStorage.setItem('redirectAfterLogin', '/checkout');
+      window.location.href = '/login';
+      return;
+    }
+
     if (items.length === 0) {
       alert('Your cart is empty');
       return;
@@ -72,9 +109,12 @@ const Cart: React.FC = () => {
                 <div key={item.id} className="bg-white dark:bg-surface-dark rounded-lg shadow-md p-6">
                   <div className="flex items-center space-x-4">
                     <img
-                      src={item.image || '/placeholder-product.jpg'}
+                      src={item.image ? `data:image/jpeg;base64,${item.image}` : 'https://via.placeholder.com/80x80.png?text=No+Image'}
                       alt={item.name}
                       className="w-20 h-20 object-cover rounded-lg"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/80x80.png?text=No+Image';
+                      }}
                     />
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold">{item.name}</h3>

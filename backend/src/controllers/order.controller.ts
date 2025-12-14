@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Order, Product, User } from '../models';
+import { Order, OrderItem, Product, User } from '../models';
 
 export const createOrder = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -89,6 +89,15 @@ export const getOrderById = async (req: Request, res: Response): Promise<void> =
         {
           model: User,
           attributes: ['id', 'name', 'email']
+        },
+        {
+          model: OrderItem,
+          include: [
+            {
+              model: Product,
+              attributes: ['id', 'name', 'image']
+            }
+          ]
         }
       ]
     });

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
 
 interface CartItem {
   id: string;
@@ -30,20 +31,28 @@ export const useCart = () => {
   return context;
 };
 
+// Helper function to get the cart key based on user ID
+const getCartKey = (userId?: number): string => {
+  return userId ? `cart_${userId}` : 'cart_guest';
+};
+
 interface CartProviderProps {
   children: ReactNode;
 }
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
+  const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load cart from localStorage on mount
+  // Load cart from localStorage when user changes
   useEffect(() => {
-    console.log('CartContext: Initializing cart from localStorage');
+    console.log('CartContext: Loading cart for user:', user?.id || 'guest');
+    setIsInitialized(false);
     try {
-      const savedCart = localStorage.getItem('cart');
-      console.log('CartContext: Raw localStorage data:', savedCart);
+      const cartKey = getCartKey(user?.id);
+      const savedCart = localStorage.getItem(cartKey);
+      console.log('CartContext: Raw localStorage data for key', cartKey, ':', savedCart);
 
       if (savedCart && savedCart !== 'undefined' && savedCart !== 'null') {
         const parsedCart = JSON.parse(savedCart);
@@ -74,7 +83,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
           setItems([]);
         }
       } else {
-        console.log('CartContext: No valid cart data found in localStorage');
+        console.log('CartContext: No valid cart data found in localStorage for key:', cartKey);
         setItems([]);
       }
     } catch (error) {
@@ -82,22 +91,23 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       setItems([]);
     } finally {
       setIsInitialized(true);
-      console.log('CartContext: Cart initialization complete');
+      console.log('CartContext: Cart initialization complete for user:', user?.id || 'guest');
     }
-  }, []);
+  }, [user]);
 
   // Save cart to localStorage whenever items change
   useEffect(() => {
     if (isInitialized) {
       try {
+        const cartKey = getCartKey(user?.id);
         const cartData = JSON.stringify(items);
-        localStorage.setItem('cart', cartData);
-        console.log('CartContext: Saved cart to localStorage:', items);
+        localStorage.setItem(cartKey, cartData);
+        console.log('CartContext: Saved cart to localStorage for key', cartKey, ':', items);
       } catch (error) {
         console.error('CartContext: Error saving cart to localStorage:', error);
       }
     }
-  }, [items, isInitialized]);
+  }, [items, isInitialized, user]);
 
   const addToCart = (newItem: Omit<CartItem, 'id'>) => {
     console.log('CartContext: addToCart called with item:', newItem);

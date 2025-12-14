@@ -6,9 +6,33 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
     const userId = (req as any).user?.userId;
     const { items, shippingAddress, totalAmount } = req.body;
 
+    // Validate input
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      res.status(400).json({ error: 'Items array is required and must not be empty' });
+      return;
+    }
+
+    for (const item of items) {
+      if (!item.productId || typeof item.productId !== 'number' || item.productId <= 0) {
+        res.status(400).json({ error: `Invalid productId: ${item.productId}` });
+        return;
+      }
+      if (!item.quantity || typeof item.quantity !== 'number' || item.quantity <= 0) {
+        res.status(400).json({ error: `Invalid quantity: ${item.quantity}` });
+        return;
+      }
+    }
+
     // Validate items and stock
     for (const item of items) {
-      const product = await Product.findByPk(item.productId);
+      let product;
+      try {
+        product = await Product.findByPk(item.productId);
+      } catch (dbError) {
+        console.error('Database error finding product:', dbError);
+        res.status(500).json({ error: 'Database error occurred while validating products' });
+        return;
+      }
       if (!product) {
         res.status(400).json({ error: `Product ${item.productId} not found` });
         return;
@@ -30,7 +54,14 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
 
     // Create order items and reduce stock
     for (const item of items) {
-      const product = await Product.findByPk(item.productId);
+      let product;
+      try {
+        product = await Product.findByPk(item.productId);
+      } catch (dbError) {
+        console.error('Database error finding product for order item:', dbError);
+        // Continue processing other items, but log the error
+        continue;
+      }
       if (product) {
         // Create order item
         await OrderItem.create({

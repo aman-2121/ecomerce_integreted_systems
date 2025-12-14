@@ -640,10 +640,11 @@ const Admin: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600 dark:text-green-400">${safePrice(order.totalAmount)}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select value={order.status} onChange={e => updateOrderStatus(order.id, e.target.value)} className="border border-gray-300 dark:border-gray-600 rounded px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                          <option>pending</option>
-                          <option>processing</option>
-                          <option>shipped</option>
-                          <option>completed</option>
+                          <option value="pending">pending</option>
+                          <option value="confirmed">confirmed</option>
+                          <option value="shipped">shipped</option>
+                          <option value="delivered">delivered</option>
+                          <option value="cancelled">cancelled</option>
                         </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{new Date(order.createdAt).toLocaleDateString()}</td>

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { User, Order, Product, Category, UserActivityLog, SystemSettings, Banner, StaticPage, EmailTemplate } from '../models';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import sequelize from '../config/database';
 
 export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
@@ -230,7 +230,7 @@ export const getTopSellingProducts = async (req: Request, res: Response): Promis
       ORDER BY salesCount DESC
       LIMIT ${parseInt(limit as string)}
     `, {
-      type: sequelize.QueryTypes.SELECT
+      type: QueryTypes.SELECT
     });
 
     res.json({ topProducts });

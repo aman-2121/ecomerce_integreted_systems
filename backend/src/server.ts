@@ -1,12 +1,9 @@
-// backend/src/server.ts
-import dotenv from 'dotenv';
+import 'dotenv/config'; // Load env vars before anything else
 import { connectDB } from './config/database';
 import { runMigrations } from './utils/migrationRunner';
 import app from './app';
 // Import models to initialize associations
 import './models';
-
-dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 

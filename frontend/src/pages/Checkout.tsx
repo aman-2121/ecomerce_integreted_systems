@@ -99,14 +99,25 @@ const Checkout: React.FC = () => {
       const orderId = orderResponse.data.order.id;
 
       // Initiate Chapa payment
+      const nameParts = (user?.name || '').split(' ');
+      const firstName = nameParts[0] || 'Customer';
+      const lastName = nameParts.slice(1).join(' ') || 'Customer';
+
       const paymentResponse = await paymentAPI.initiate({
         orderId,
         amount: total,
-        email: user?.email || ''
+        email: user?.email || '',
+        first_name: firstName,
+        last_name: lastName,
+        phone_number: formData.phone
       });
 
       // Redirect to Chapa checkout page
-      window.location.href = paymentResponse.data.checkout_url;
+      if (paymentResponse.data.checkout_url) {
+        window.location.href = paymentResponse.data.checkout_url;
+      } else {
+        throw new Error('Invalid response from payment server');
+      }
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Checkout failed. Please check your cart items and try again.';
       setError(msg);
@@ -143,7 +154,7 @@ const Checkout: React.FC = () => {
               <div className="card-header">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Shipping Information</h2>
               </div>
-              
+
               <div className="card-body space-y-4">
                 <div className="form-group">
                   <label htmlFor="shippingAddress" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

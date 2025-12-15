@@ -72,12 +72,12 @@ export const orderAPI = {
   create: (data: any) => api.post('/orders', data),
   getMyOrders: () => api.get('/orders/my-orders'),
   getById: (id: string) => api.get(`/orders/${id}`),
-  updateStatus: (id: string, status: string) => 
+  updateStatus: (id: string, status: string) =>
     api.put(`/orders/${id}/status`, { status }),
 };
 
 export const paymentAPI = {
-  initiate: (data: { orderId: number; amount: number; email: string }) => api.post('/payments/initiate', data),
+  initiate: (data: { orderId: number; amount: number; email: string; first_name: string; last_name: string; phone_number: string }) => api.post('/payments/initiate', data),
   getStatus: (orderId: string) => api.get(`/payments/status/${orderId}`),
 };
 

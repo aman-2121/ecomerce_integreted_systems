@@ -7,7 +7,7 @@ interface PaymentAttributes {
   amount: number;
   paymentMethod: string;
   transactionId: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
   telebirrResponse?: any;
   createdAt?: Date;
   updatedAt?: Date;

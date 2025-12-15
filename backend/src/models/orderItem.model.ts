@@ -11,7 +11,7 @@ interface OrderItemAttributes {
   updatedAt?: Date;
 }
 
-interface OrderItemCreationAttributes extends Optional<OrderItemAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+interface OrderItemCreationAttributes extends Optional<OrderItemAttributes, 'id' | 'createdAt' | 'updatedAt'> { }
 
 class OrderItem extends Model<OrderItemAttributes, OrderItemCreationAttributes> implements OrderItemAttributes {
   public id!: number;
@@ -63,9 +63,9 @@ OrderItem.init(
     },
   },
   {
-    sequelize, 
+    sequelize,
     tableName: 'order_items',
-    timestamps: true,
+    timestamps: false,
   }
 );
 

@@ -2,10 +2,11 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 import Order from '../models/order.model';
+import Payment from '../models/payment.model';
 import { UserPaymentMethod } from '../models/index';
 
 const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY!;
-const CHAPA_URL = 'https://api.chapa.co/v1';
+const CHAPA_BASE_URL = process.env.CHAPA_BASE_URL || 'https://api.chapa.co/v1';
 
 export const initiatePayment = async (req: Request, res: Response) => {
   try {
@@ -34,7 +35,7 @@ export const initiatePayment = async (req: Request, res: Response) => {
       },
     };
 
-    const response = await axios.post(`${CHAPA_URL}/transaction/initialize`, payload, {
+    const response = await axios.post(`${CHAPA_BASE_URL}/transaction/initialize`, payload, {
       headers: {
         Authorization: `Bearer ${CHAPA_SECRET_KEY}`,
       },
@@ -71,7 +72,7 @@ export const getPaymentStatus = async (req: Request, res: Response) => {
 
 export const getPaymentMethods = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user?.userId;
     const paymentMethods = await UserPaymentMethod.findAll({
       where: { userId },
       attributes: ['id', 'type', 'provider', 'last4', 'brand', 'expiryMonth', 'expiryYear', 'isDefault']
@@ -85,7 +86,7 @@ export const getPaymentMethods = async (req: Request, res: Response) => {
 
 export const addPaymentMethod = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user?.userId;
     const { type, provider, last4, brand, expiryMonth, expiryYear, chapaToken } = req.body;
 
     if (!type || !provider) {
@@ -113,7 +114,7 @@ export const addPaymentMethod = async (req: Request, res: Response) => {
 
 export const updatePaymentMethod = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user?.userId;
     const { id } = req.params;
     const { isDefault } = req.body;
 
@@ -144,7 +145,7 @@ export const updatePaymentMethod = async (req: Request, res: Response) => {
 
 export const deletePaymentMethod = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user?.userId;
     const { id } = req.params;
 
     const paymentMethod = await UserPaymentMethod.findOne({

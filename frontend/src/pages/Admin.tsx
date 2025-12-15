@@ -1,4 +1,4 @@
-// frontend/src/pages/Admin.tsx
+// frontend/src/pages/Admin.tsx (Full Complete - Image as URL String)
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useDarkModeContext } from '../context/DarkModeContext';
@@ -66,7 +66,7 @@ const Admin: React.FC = () => {
     description: '',
     price: '',
     stock: '',
-    image: null as File | null,
+    image: '',
     category: ''
   });
 
@@ -119,7 +119,7 @@ const Admin: React.FC = () => {
     const priceNum = parseFloat(productForm.price);
     const stockNum = parseInt(productForm.stock, 10);
 
-    if (!productForm.name || isNaN(priceNum) || isNaN(stockNum)) {
+    if (!productForm.name || isNaN(priceNum) || isNaN(stockNum) || !productForm.image) {
       setMessage('Please fill all required fields correctly');
       return;
     }
@@ -130,7 +130,7 @@ const Admin: React.FC = () => {
     formData.append('price', priceNum.toString());
     formData.append('stock', stockNum.toString());
     formData.append('category', productForm.category.trim());
-    if (productForm.image) formData.append('image', productForm.image);
+    formData.append('image', productForm.image.trim()); // String URL
 
     try {
       editingProduct
@@ -140,7 +140,7 @@ const Admin: React.FC = () => {
       setMessage(editingProduct ? 'Product updated!' : 'Product created!');
       setShowProductForm(false);
       setEditingProduct(null);
-      setProductForm({ name: '', description: '', price: '', stock: '', image: null, category: '' });
+      setProductForm({ name: '', description: '', price: '', stock: '', image: '', category: '' });
       loadAllData();
     } catch (err: any) {
       setMessage(err.response?.data?.error || 'Failed');
@@ -154,7 +154,7 @@ const Admin: React.FC = () => {
       description: p.description || '',
       price: safePrice(p.price),
       stock: p.stock.toString(),
-      image: null,
+      image: p.image || '',
       category: p.category || ''
     });
     setShowProductForm(true);
@@ -251,9 +251,9 @@ const Admin: React.FC = () => {
               <p className="text-gray-600 dark:text-gray-300 mt-1">Welcome back, {user.name}!</p>
             </div>
             <div className="flex items-center space-x-4">
-<div className="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-100 px-5 py-3 rounded-full text-sm font-semibold shadow-lg hover:shadow-xl dark:hover:shadow-purple-500/20 transition-shadow duration-300">
-  Admin Panel
-</div>
+              <div className="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-100 px-5 py-3 rounded-full text-sm font-semibold shadow-lg hover:shadow-xl dark:hover:shadow-purple-500/20 transition-shadow duration-300">
+                Admin Panel
+              </div>
             </div>
           </div>
         </div>
@@ -261,31 +261,31 @@ const Admin: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* TABS */}
-   <div className="mb-8">
-  <nav className="flex space-x-1 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-    {[
-      { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-      { id: 'analytics', label: 'Analytics', icon: '📈' },
-      { id: 'products', label: 'Products', icon: '📦' },
-      { id: 'categories', label: 'Categories', icon: '🏷️' },
-      { id: 'orders', label: 'Orders', icon: '📋' },
-      { id: 'users', label: 'Users', icon: '👥' }
-    ].map((tab) => (
-      <button
-        key={tab.id}
-        onClick={() => setActiveTab(tab.id as any)}
-        className={`flex-1 flex items-center justify-center px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 ${
-          activeTab === tab.id
-            ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-lg transform scale-105'
-            : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
-        }`}
-      >
-        <span className="mr-2">{tab.icon}</span>
-        {tab.label}
-      </button>
-    ))}
-  </nav>
-</div>
+        <div className="mb-8">
+          <nav className="flex space-x-1 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            {[
+              { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+              { id: 'analytics', label: 'Analytics', icon: '📈' },
+              { id: 'products', label: 'Products', icon: '📦' },
+              { id: 'categories', label: 'Categories', icon: '🏷️' },
+              { id: 'orders', label: 'Orders', icon: '📋' },
+              { id: 'users', label: 'Users', icon: '👥' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex-1 flex items-center justify-center px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  activeTab === tab.id
+                    ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-lg transform scale-105'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                <span className="mr-2">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
 
         {message && (
           <div className={`p-4 rounded-lg mb-6 text-center text-lg font-medium ${message.includes('Error') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
@@ -362,7 +362,7 @@ const Admin: React.FC = () => {
                   onClick={() => {
                     setActiveTab('products');
                     setEditingProduct(null);
-                    setProductForm({ name: '', description: '', price: '', stock: '', image: null, category: '' });
+                    setProductForm({ name: '', description: '', price: '', stock: '', image: '', category: '' });
                     setShowProductForm(true);
                   }}
                   className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-800/30 dark:hover:to-blue-700/30 transition-all duration-200 group"
@@ -446,7 +446,7 @@ const Admin: React.FC = () => {
           </div>
         )}
 
-        {/* PRODUCTS — IMAGES SHOW PERFECTLY */}
+        {/* PRODUCTS */}
         {activeTab === 'products' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -454,10 +454,10 @@ const Admin: React.FC = () => {
               <button
                 onClick={() => {
                   setEditingProduct(null);
-                  setProductForm({ name: '', description: '', price: '', stock: '', image: null, category: '' });
+                  setProductForm({ name: '', description: '', price: '', stock: '', image: '', category: '' });
                   setShowProductForm(true);
                 }}
-           className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-teal-700 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105 transition-all duration-300 shadow-lg"
+                className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-teal-700 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105 transition-all duration-300 shadow-lg"
               >
                 + Add Product
               </button>
@@ -499,8 +499,21 @@ const Admin: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Product Image</label>
-                    <input type="file" accept="image/*" onChange={(e) => setProductForm({...productForm, image: e.target.files?.[0] || null})} className="w-full text-gray-900 dark:text-white" required={!editingProduct} />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Product Image URL</label>
+                    <input 
+                      type="url" 
+                      placeholder="https://example.com/image.jpg or /hoodie.jpg" 
+                      value={productForm.image} 
+                      onChange={(e) => setProductForm({...productForm, image: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+                      required={!editingProduct}
+                    />
+                    {productForm.image && (
+                      <div className="mt-3">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Preview:</p>
+                        <img src={productForm.image} alt="Preview" className="h-32 w-32 object-cover rounded-lg border border-gray-300 dark:border-gray-600" onError={(e) => (e.currentTarget.src = '/placeholder.png')} />
+                      </div>
+                    )}
                   </div>
                   <div className="flex space-x-4">
                     <button type="submit" className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-xl">Save</button>
@@ -532,11 +545,9 @@ const Admin: React.FC = () => {
                             <div className="flex-shrink-0 h-12 w-12">
                               <img
                                 className="h-12 w-12 rounded-lg object-cover"
-                                src={product.image ? `data:image/jpeg;base64,${product.image}` : '/placeholder.png'}
+                                src={product.image || '/placeholder.png'}
                                 alt={product.name}
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src = '/placeholder.png';
-                                }}
+                                onError={(e) => (e.currentTarget.src = '/placeholder.png')}
                               />
                             </div>
                             <div className="ml-4">
@@ -566,6 +577,7 @@ const Admin: React.FC = () => {
           </div>
         )}
 
+        {/* CATEGORIES */}
         {activeTab === 'categories' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -618,6 +630,7 @@ const Admin: React.FC = () => {
           </div>
         )}
 
+        {/* ORDERS */}
         {activeTab === 'orders' && (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl">
             <h2 className="text-2xl font-bold p-6 border-b border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">Order Management</h2>
@@ -656,6 +669,7 @@ const Admin: React.FC = () => {
           </div>
         )}
 
+        {/* USERS */}
         {activeTab === 'users' && (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl">
             <h2 className="text-2xl font-bold p-6 border-b border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">User Management</h2>
@@ -698,8 +712,6 @@ const Admin: React.FC = () => {
             </table>
           </div>
         )}
-
-
       </div>
     </div>
   );

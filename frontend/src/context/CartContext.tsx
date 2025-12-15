@@ -13,6 +13,7 @@ interface CartItem {
 
 interface CartContextType {
   items: CartItem[];
+  isLoading: boolean;
   addToCart: (item: Omit<CartItem, 'id'>) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -47,52 +48,79 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   // Load cart from localStorage when user changes
   useEffect(() => {
-    console.log('CartContext: Loading cart for user:', user?.id || 'guest');
-    setIsInitialized(false);
-    try {
-      const cartKey = getCartKey(user?.id);
-      const savedCart = localStorage.getItem(cartKey);
-      console.log('CartContext: Raw localStorage data for key', cartKey, ':', savedCart);
+    const loadCart = async () => {
+      console.log('CartContext: Loading cart for user:', user?.id || 'guest');
+      setIsInitialized(false);
+      try {
+        const cartKey = getCartKey(user?.id);
+        const savedCart = localStorage.getItem(cartKey);
+        console.log('CartContext: Raw localStorage data for key', cartKey, ':', savedCart);
 
-      if (savedCart && savedCart !== 'undefined' && savedCart !== 'null') {
-        const parsedCart = JSON.parse(savedCart);
-        console.log('CartContext: Parsed cart items:', parsedCart);
+        if (savedCart && savedCart !== 'undefined' && savedCart !== 'null') {
+          const parsedCart = JSON.parse(savedCart);
+          console.log('CartContext: Parsed minimal cart items:', parsedCart);
 
-        if (Array.isArray(parsedCart)) {
-          // Validate cart items
-          const validItems = parsedCart.filter(item => {
-            const isValid = item &&
-              typeof item.id === 'string' &&
-              typeof item.productId === 'number' &&
-              typeof item.name === 'string' &&
-              typeof item.price === 'number' &&
-              typeof item.quantity === 'number' &&
-              typeof item.image === 'string' &&
-              typeof item.stock === 'number';
+          if (Array.isArray(parsedCart)) {
+            // Validate minimal cart items (only productId and quantity)
+            const validMinimalItems = parsedCart.filter(item => {
+              const isValid = item &&
+                typeof item.productId === 'number' &&
+                typeof item.quantity === 'number' &&
+                item.quantity > 0;
 
-            if (!isValid) {
-              console.warn('CartContext: Invalid cart item found:', item);
+              if (!isValid) {
+                console.warn('CartContext: Invalid minimal cart item found:', item);
+              }
+              return isValid;
+            });
+
+            console.log('CartContext: Valid minimal cart items:', validMinimalItems);
+
+            // Fetch fresh product data for each item
+            const validItems: CartItem[] = [];
+            for (const item of validMinimalItems) {
+              try {
+                const response = await fetch(`http://localhost:5000/api/products/${item.productId}`);
+                if (response.ok) {
+                  const data = await response.json();
+                  const product = data.product;
+                  validItems.push({
+                    id: `${product.id}-${Date.now()}`,
+                    productId: product.id,
+                    name: product.name,
+                    price: parseFloat(product.price),
+                    quantity: item.quantity,
+                    image: product.image,
+                    stock: product.stock
+                  });
+                } else {
+                  console.warn('CartContext: Failed to fetch product', item.productId, 'status:', response.status);
+                }
+              } catch (error) {
+                console.warn('CartContext: Error fetching product', item.productId, ':', error);
+              }
             }
-            return isValid;
-          });
 
-          console.log('CartContext: Valid cart items:', validItems);
-          setItems(validItems);
+            console.log('CartContext: Final cart items with fresh data:', validItems);
+            setItems(validItems);
+          } else {
+            console.warn('CartContext: Cart data is not an array, resetting to empty');
+            setItems([]);
+          }
         } else {
-          console.warn('CartContext: Cart data is not an array, resetting to empty');
+          console.log('CartContext: No valid cart data found in localStorage for key:', cartKey);
           setItems([]);
         }
-      } else {
-        console.log('CartContext: No valid cart data found in localStorage for key:', cartKey);
+      } catch (error) {
+        console.error('CartContext: Error loading cart from localStorage:', error);
         setItems([]);
+      } finally {
+        setIsInitialized(true);
+        console.log('CartContext: Cart initialization complete for user:', user?.id || 'guest');
       }
-    } catch (error) {
-      console.error('CartContext: Error loading cart from localStorage:', error);
-      setItems([]);
-    } finally {
-      setIsInitialized(true);
-      console.log('CartContext: Cart initialization complete for user:', user?.id || 'guest');
-    }
+    };
+
+    loadCart();
   }, [user]);
 
   // Save cart to localStorage whenever items change
@@ -100,9 +128,14 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     if (isInitialized) {
       try {
         const cartKey = getCartKey(user?.id);
-        const cartData = JSON.stringify(items);
+        // Save only productId and quantity to prevent stale data issues
+        const minimalCart = items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity
+        }));
+        const cartData = JSON.stringify(minimalCart);
         localStorage.setItem(cartKey, cartData);
-        console.log('CartContext: Saved cart to localStorage for key', cartKey, ':', items);
+        console.log('CartContext: Saved minimal cart to localStorage for key', cartKey, ':', minimalCart);
       } catch (error) {
         console.error('CartContext: Error saving cart to localStorage:', error);
       }
@@ -174,6 +207,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   const value: CartContextType = {
     items,
+    isLoading: !isInitialized,
     addToCart,
     removeFromCart,
     updateQuantity,

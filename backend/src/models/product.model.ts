@@ -6,7 +6,7 @@ interface ProductAttributes {
   name: string;
   description?: string;
   price: number;
-  image?: Buffer;  // ✅ Changed back to Buffer to match database BYTEA
+  image?: string;  // Changed to string for URL
   stock: number;
   categoryId?: number;
   createdAt?: Date;
@@ -20,7 +20,7 @@ class Product extends Model<ProductAttributes, ProductCreationAttributes> implem
   public name!: string;
   public description?: string;
   public price!: number;
-  public image?: Buffer;  // ✅ Changed back to Buffer to match database BYTEA
+  public image?: string;  // Changed to string for URL
   public stock!: number;
   public categoryId?: number;
   public readonly createdAt!: Date;
@@ -47,7 +47,7 @@ Product.init(
       allowNull: false,
     },
     image: {
-      type: 'BYTEA',  // ✅ Use BYTEA for PostgreSQL binary data
+      type: DataTypes.STRING,  // Changed to STRING for URL
       allowNull: true,
     },
     stock: {

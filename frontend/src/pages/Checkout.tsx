@@ -1,9 +1,9 @@
+// frontend/src/pages/Checkout.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { orderAPI, paymentAPI } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import LoadingSpinner from '../components/LoadingSpinner';
 
 interface CheckoutForm {
   shippingAddress: string;
@@ -22,11 +22,6 @@ const Checkout: React.FC = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Debug logging for cart items
-  console.log('Checkout: Cart items received:', cartItems);
-  console.log('Checkout: Cart items length:', cartItems.length);
-  console.log('Checkout: Cart total:', getTotal());
-
   const [formData, setFormData] = useState<CheckoutForm>({
     shippingAddress: '',
     city: '',
@@ -36,10 +31,11 @@ const Checkout: React.FC = () => {
     paymentMethod: 'chapa'
   });
 
-  // Calculate totals
+  // Calculate totals with correct Ethiopia VAT (15%)
   const subtotal = getTotal();
   const shipping = subtotal > 100 ? 0 : 9.99; // Free shipping over $100
-  const tax = subtotal * 0.08; // 8% tax
+  const taxRate = 0.15; // Ethiopia VAT rate (15%)
+  const tax = subtotal * taxRate;
   const total = subtotal + shipping + tax;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -64,14 +60,9 @@ const Checkout: React.FC = () => {
           }
         });
 
-        if (!response.ok) {
-          localStorage.removeItem('token');
-          navigate('/login');
-          return;
-        }
-
+        if (!response.ok) throw new Error();
         setAuthLoading(false);
-      } catch (error) {
+      } catch {
         localStorage.removeItem('token');
         navigate('/login');
       }
@@ -82,18 +73,23 @@ const Checkout: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (cartItems.length === 0) {
+      setError('Your cart is empty. Please add items before checkout.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      // Transform cart items to match API format
+      // Prepare order items for backend
       const orderItems = cartItems.map((item: any) => ({
         productId: item.productId,
-        quantity: item.quantity,
-        price: item.price
+        quantity: item.quantity
       }));
 
-      // Create order
+      // Create order on backend
       const orderResponse = await orderAPI.create({
         items: orderItems,
         shippingAddress: `${formData.shippingAddress}, ${formData.city}, ${formData.postalCode}, ${formData.country}`,
@@ -102,33 +98,39 @@ const Checkout: React.FC = () => {
 
       const orderId = orderResponse.data.order.id;
 
-      // Initiate payment
+      // Initiate Chapa payment
       const paymentResponse = await paymentAPI.initiate({
         orderId,
         amount: total,
         email: user?.email || ''
       });
 
-      // Redirect to Chapa payment page
+      // Redirect to Chapa checkout page
       window.location.href = paymentResponse.data.checkout_url;
-
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Checkout failed');
+      const msg = err.response?.data?.error || 'Checkout failed. Please check your cart items and try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  if (!user) {
-    return null;
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
+      </div>
+    );
   }
 
+  if (!user) return null;
+
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto py-8">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Checkout</h1>
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 px-6 py-4 rounded-lg mb-8">
           {error}
         </div>
       )}
@@ -220,7 +222,7 @@ const Checkout: React.FC = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     className="input-field"
-                    placeholder="Phone number"
+                    placeholder="+251 9xx xxx xxx"
                     required
                   />
                 </div>
@@ -294,7 +296,7 @@ const Checkout: React.FC = () => {
                     <span className="font-medium text-gray-900 dark:text-white">${shipping.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-300">Tax</span>
+                    <span className="text-gray-600 dark:text-gray-300">Tax (15% VAT)</span>
                     <span className="font-medium text-gray-900 dark:text-white">${tax.toFixed(2)}</span>
                   </div>
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-2">

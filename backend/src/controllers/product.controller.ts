@@ -6,13 +6,7 @@ export const getAllProducts = async (req: Request, res: Response) => {
   try {
     const products = await Product.findAll({ include: [Category] });
 
-    // CONVERT BUFFER TO BASE64 FOR FRONTEND
-    const productsWithBase64 = products.map(p => ({
-      ...p.toJSON(),
-      image: p.image ? p.image.toString('base64') : null
-    }));
-
-    res.json({ products: productsWithBase64 });
+    res.json({ products });
   } catch (error: any) {
     console.error('Get products error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -24,12 +18,7 @@ export const getProductById = async (req: Request, res: Response) => {
     const product = await Product.findByPk(req.params.id, { include: [Category] });
     if (!product) return res.status(404).json({ error: 'Product not found' });
 
-    const productWithBase64 = {
-      ...product.toJSON(),
-      image: product.image ? product.image.toString('base64') : null
-    };
-
-    res.json({ product: productWithBase64 });
+    res.json({ product });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -37,8 +26,7 @@ export const getProductById = async (req: Request, res: Response) => {
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
-    const { name, description, price, stock, category, categoryId } = req.body;
-    const imageFile = req.file;
+    const { name, description, price, stock, category, categoryId, image } = req.body;
 
     if (!name || !price || stock === undefined) {
       return res.status(400).json({ error: 'Name, price and stock are required' });
@@ -72,20 +60,16 @@ export const createProduct = async (req: Request, res: Response) => {
       description: description?.trim() || null,
       price: priceNum,
       stock: stockNum,
-      image: imageFile ? imageFile.buffer : null,
+      image: image?.trim() || null,
       categoryId: finalCategoryId,
     });
 
-    // RETURN WITH BASE64 IMAGE
+    // RETURN PRODUCT
     const result = await Product.findByPk(product.id, { include: [Category] });
-    const resultWithBase64 = {
-      ...result.toJSON(),
-      image: result.image ? result.image.toString('base64') : null
-    };
 
     res.status(201).json({
       message: 'Product created successfully',
-      product: resultWithBase64,
+      product: result,
     });
   } catch (error: any) {
     console.error('CREATE PRODUCT ERROR:', error);
@@ -141,16 +125,12 @@ export const updateProduct = async (req: Request, res: Response) => {
 
     await product.update(updates);
 
-    // RETURN UPDATED PRODUCT WITH BASE64 IMAGE
+    // RETURN UPDATED PRODUCT
     const updated = await Product.findByPk(id, { include: [Category] });
-    const updatedWithBase64 = {
-      ...updated.toJSON(),
-      image: updated.image ? updated.image.toString('base64') : null
-    };
 
     res.json({
       message: 'Product updated successfully',
-      product: updatedWithBase64,
+      product: updated,
     });
   } catch (error: any) {
     console.error('UPDATE PRODUCT ERROR:', error);

@@ -45,7 +45,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   };
 
   const imageUrl = product.image
-    ? `data:image/jpeg;base64,${product.image}`
+    ? product.image
     : 'https://via.placeholder.com/300x300.png?text=No+Image';
 
   // Mock rating if not provided

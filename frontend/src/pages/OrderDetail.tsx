@@ -145,7 +145,7 @@ const OrderDetail: React.FC = () => {
               {order.orderItems.map((item) => (
                 <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                   <img
-                    src={item.product.image ? `data:image/jpeg;base64,${item.product.image}` : '/placeholder.png'}
+                    src={item.product.image ? item.product.image : '/placeholder.png'}
                     alt={item.product.name}
                     className="w-16 h-16 object-cover rounded-lg"
                     onError={(e) => {

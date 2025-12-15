@@ -15,7 +15,7 @@ interface CartItem {
 
 const Cart: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
-  const { items, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { items, isLoading, removeFromCart, updateQuantity, clearCart } = useCart();
   const [loading, setLoading] = useState(false);
 
   const totalPrice = items.reduce((total: number, item: CartItem) => total + item.price * item.quantity, 0);
@@ -78,6 +78,18 @@ const Cart: React.FC = () => {
     window.location.href = '/checkout';
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-300 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⏳</div>
+          <h1 className="text-3xl font-bold mb-4">Loading your cart...</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-8">Please wait while we fetch your items.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-300 flex items-center justify-center">
@@ -109,7 +121,7 @@ const Cart: React.FC = () => {
                 <div key={item.id} className="bg-white dark:bg-surface-dark rounded-lg shadow-md p-6">
                   <div className="flex items-center space-x-4">
                     <img
-                      src={item.image ? `data:image/jpeg;base64,${item.image}` : 'https://via.placeholder.com/80x80.png?text=No+Image'}
+                      src={item.image ? item.image : 'https://via.placeholder.com/80x80.png?text=No+Image'}
                       alt={item.name}
                       className="w-20 h-20 object-cover rounded-lg"
                       onError={(e) => {

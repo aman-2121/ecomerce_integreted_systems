@@ -30,7 +30,7 @@ const ProductDetail: React.FC = () => {
   };
 
   const imageUrl = product.image
-    ? `data:image/jpeg;base64,${product.image}`
+    ? product.image
     : 'https://via.placeholder.com/600x600.png?text=No+Image';
 
   const handleAddToCart = () => {

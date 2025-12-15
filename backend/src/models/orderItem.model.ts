@@ -6,7 +6,7 @@ interface OrderItemAttributes {
   orderId: number;
   productId: number;
   quantity: number;
-  price: number; // Price at time of purchase
+  unitPrice: number; // Price at time of purchase
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -18,7 +18,7 @@ class OrderItem extends Model<OrderItemAttributes, OrderItemCreationAttributes> 
   public orderId!: number;
   public productId!: number;
   public quantity!: number;
-  public price!: number;
+  public unitPrice!: number;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -57,13 +57,13 @@ OrderItem.init(
         min: 1,
       },
     },
-    price: {
+    unitPrice: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
   },
   {
-    sequelize,
+    sequelize, 
     tableName: 'order_items',
     timestamps: true,
   }

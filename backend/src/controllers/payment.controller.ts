@@ -4,95 +4,186 @@ import axios from 'axios';
 import Order from '../models/order.model';
 import Payment from '../models/payment.model';
 import { UserPaymentMethod } from '../models/index';
+import { PaymentService } from '../services/payment.service';
 
 const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY!;
 const CHAPA_BASE_URL = process.env.CHAPA_BASE_URL || 'https://api.chapa.co/v1';
 
 export const initiatePayment = async (req: Request, res: Response) => {
+  console.log('=== INITIATE PAYMENT CONTROLLER START ===');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('Request headers:', req.headers);
+  
   try {
-    const { orderId, amount, email, first_name, last_name, phone_number } = req.body;
+    const { orderId, email, first_name, last_name, phone_number } = req.body;
+    console.log('Parsed request data:', { orderId, email, first_name, last_name, phone_number });
 
-    if (!orderId || !amount || !email) {
-      return res.status(400).json({ error: 'orderId, amount, and email are required' });
+    if (!orderId || !email) {
+      console.error('Validation failed - Missing required fields:', { orderId, email });
+      return res.status(400).json({ 
+        error: 'orderId and email are required',
+        received: { orderId, email }
+      });
     }
 
-    const tx_ref = `tx-${orderId}-${Date.now()}`;
+    console.log('All required fields present');
+    console.log('CHAPA_SECRET_KEY exists:', !!CHAPA_SECRET_KEY);
+    console.log('CHAPA_BASE_URL:', CHAPA_BASE_URL);
+    console.log('PaymentService type:', typeof PaymentService);
+    console.log('PaymentService.initiateChapaPayment:', typeof PaymentService.initiateChapaPayment);
 
-    const payload = {
-      amount: parseFloat(amount).toFixed(2),
-      currency: 'ETB',
+    // Use the service to initiate payment
+    console.log('Calling PaymentService.initiateChapaPayment...');
+    const result = await PaymentService.initiateChapaPayment(orderId, {
       email,
-      first_name: first_name || 'Customer',
-      last_name: last_name || '',
-      phone_number: phone_number || '',
-      tx_ref,
-      callback_url: `${process.env.FRONTEND_URL}/api/payments/callback`,
-      return_url: `${process.env.FRONTEND_URL}/payment/success?tx_ref=${tx_ref}`,
-      customization: {
-        title: 'E-Commerce Ethiopia',
-        description: 'Thank you for shopping with us!',
-        logo: `${process.env.FRONTEND_URL}/logo.png`,
-      },
-    };
-
-    const response = await axios.post(`${CHAPA_BASE_URL}/transaction/initialize`, payload, {
-      headers: {
-        Authorization: `Bearer ${CHAPA_SECRET_KEY}`,
-      },
+      first_name,
+      last_name,
+      phone_number
+    });
+    
+    console.log('PaymentService response:', JSON.stringify(result, null, 2));
+    console.log('Response structure check:', {
+      hasMessage: !!result?.message,
+      hasTransactionId: !!result?.transactionId,
+      messageType: typeof result?.message,
+      transactionIdType: typeof result?.transactionId
     });
 
-    // Update order with tx_ref
-    await Order.update({ paymentTxRef: tx_ref }, { where: { id: orderId } });
-
-    res.json({
+    const responseData = {
       success: true,
-      checkout_url: response.data.data.checkout_url,
-      tx_ref,
-    });
+      checkout_url: result.message, // Service returns checkout_url in message
+      tx_ref: result.transactionId,
+    };
+    
+    console.log('Sending success response:', JSON.stringify(responseData, null, 2));
+    console.log('=== INITIATE PAYMENT CONTROLLER END (SUCCESS) ===');
+    
+    res.json(responseData);
   } catch (error: any) {
-    console.error('Chapa Error:', error.response?.data || error.message);
-    res.status(500).json({
+    console.error('=== INITIATE PAYMENT ERROR ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // Check for specific error types
+    if (error.response) {
+      console.error('Axios response error:');
+      console.error('Status:', error.response.status);
+      console.error('Data:', JSON.stringify(error.response.data, null, 2));
+      console.error('Headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('Axios request error - No response received:');
+      console.error('Request:', error.request);
+    }
+    
+    console.error('Full error object:', JSON.stringify(error, null, 2));
+    
+    const errorResponse = {
       success: false,
       error: 'Payment failed',
-      details: error.response?.data || error.message,
-    });
+      details: error.message,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.error('Sending error response:', JSON.stringify(errorResponse, null, 2));
+    console.log('=== INITIATE PAYMENT CONTROLLER END (ERROR) ===');
+    
+    res.status(500).json(errorResponse);
   }
 };
 
 export const paymentCallback = async (req: Request, res: Response) => {
+  console.log('=== PAYMENT CALLBACK START ===');
+  console.log('Callback request body:', JSON.stringify(req.body, null, 2));
+  console.log('Callback request headers:', req.headers);
+  console.log('Callback request query:', req.query);
+  console.log('Callback request params:', req.params);
+  
   // Chapa will call this when payment status changes
-  console.log('Chapa Callback:', req.body);
+  console.log('Chapa Callbody:', req.body);
+  
+  console.log('=== PAYMENT CALLBACK END ===');
   res.status(200).send('OK');
 };
 
 export const getPaymentStatus = async (req: Request, res: Response) => {
+  console.log('=== GET PAYMENT STATUS START ===');
+  console.log('Request params:', req.params);
+  console.log('Request query:', req.query);
+  console.log('Request body:', req.body);
+  
   // Frontend will call this to verify
-  res.json({ status: 'success', message: 'Payment verified' });
+  const response = { status: 'success', message: 'Payment verified' };
+  console.log('Sending response:', response);
+  console.log('=== GET PAYMENT STATUS END ===');
+  
+  res.json(response);
 };
 
 export const getPaymentMethods = async (req: Request, res: Response) => {
+  console.log('=== GET PAYMENT METHODS START ===');
+  console.log('Request user:', (req as any).user);
+  
   try {
     const userId = (req as any).user?.userId;
+    console.log('Extracted userId:', userId);
+    
+    if (!userId) {
+      console.error('No userId found in request');
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    
+    console.log('Fetching payment methods for userId:', userId);
     const paymentMethods = await UserPaymentMethod.findAll({
       where: { userId },
       attributes: ['id', 'type', 'provider', 'last4', 'brand', 'expiryMonth', 'expiryYear', 'isDefault']
     });
-    res.json({ success: true, paymentMethods });
+    
+    console.log('Found payment methods:', JSON.stringify(paymentMethods, null, 2));
+    console.log('Number of payment methods:', paymentMethods.length);
+    
+    const response = { success: true, paymentMethods, count: paymentMethods.length };
+    console.log('Sending response:', JSON.stringify(response, null, 2));
+    console.log('=== GET PAYMENT METHODS END (SUCCESS) ===');
+    
+    res.json(response);
   } catch (error: any) {
-    console.error('Get payment methods error:', error);
-    res.status(500).json({ success: false, error: 'Failed to get payment methods' });
+    console.error('=== GET PAYMENT METHODS ERROR ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Full error:', JSON.stringify(error, null, 2));
+    console.log('=== GET PAYMENT METHODS END (ERROR) ===');
+    
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to get payment methods',
+      details: error.message 
+    });
   }
 };
 
 export const addPaymentMethod = async (req: Request, res: Response) => {
+  console.log('=== ADD PAYMENT METHOD START ===');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('Request user:', (req as any).user);
+  
   try {
     const userId = (req as any).user?.userId;
+    console.log('Extracted userId:', userId);
+    
     const { type, provider, last4, brand, expiryMonth, expiryYear, chapaToken } = req.body;
-
+    console.log('Parsed payment method data:', { type, provider, last4, brand, expiryMonth, expiryYear, chapaToken });
+    
     if (!type || !provider) {
-      return res.status(400).json({ error: 'Type and provider are required' });
+      console.error('Missing required fields:', { type, provider });
+      return res.status(400).json({ 
+        error: 'Type and provider are required',
+        received: { type, provider }
+      });
     }
-
+    
+    console.log('Creating payment method...');
     const paymentMethod = await UserPaymentMethod.create({
       userId,
       type,
@@ -104,102 +195,206 @@ export const addPaymentMethod = async (req: Request, res: Response) => {
       chapaToken,
       isDefault: false
     });
-
-    res.json({ success: true, paymentMethod });
+    
+    console.log('Payment method created successfully:', JSON.stringify(paymentMethod, null, 2));
+    
+    const response = { success: true, paymentMethod };
+    console.log('Sending response:', JSON.stringify(response, null, 2));
+    console.log('=== ADD PAYMENT METHOD END (SUCCESS) ===');
+    
+    res.json(response);
   } catch (error: any) {
-    console.error('Add payment method error:', error);
-    res.status(500).json({ success: false, error: 'Failed to add payment method' });
+    console.error('=== ADD PAYMENT METHOD ERROR ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Full error:', JSON.stringify(error, null, 2));
+    console.log('=== ADD PAYMENT METHOD END (ERROR) ===');
+    
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to add payment method',
+      details: error.message 
+    });
   }
 };
 
 export const updatePaymentMethod = async (req: Request, res: Response) => {
+  console.log('=== UPDATE PAYMENT METHOD START ===');
+  console.log('Request params:', req.params);
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('Request user:', (req as any).user);
+  
   try {
     const userId = (req as any).user?.userId;
     const { id } = req.params;
     const { isDefault } = req.body;
-
+    
+    console.log('Extracted data:', { userId, id, isDefault });
+    
+    console.log('Looking for payment method with id:', id, 'and userId:', userId);
     const paymentMethod = await UserPaymentMethod.findOne({
       where: { id, userId }
     });
-
+    
+    console.log('Found payment method:', paymentMethod ? JSON.stringify(paymentMethod, null, 2) : 'NOT FOUND');
+    
     if (!paymentMethod) {
+      console.error('Payment method not found');
       return res.status(404).json({ error: 'Payment method not found' });
     }
-
+    
     if (isDefault) {
+      console.log('Setting all other methods to non-default for userId:', userId);
       // Set all other methods to non-default
       await UserPaymentMethod.update(
         { isDefault: false },
         { where: { userId } }
       );
+      console.log('Updated other payment methods');
     }
-
+    
+    console.log('Updating payment method with isDefault:', isDefault);
     await paymentMethod.update({ isDefault });
-
-    res.json({ success: true, paymentMethod });
+    console.log('Payment method updated successfully');
+    
+    const response = { success: true, paymentMethod: paymentMethod.toJSON() };
+    console.log('Sending response:', JSON.stringify(response, null, 2));
+    console.log('=== UPDATE PAYMENT METHOD END (SUCCESS) ===');
+    
+    res.json(response);
   } catch (error: any) {
-    console.error('Update payment method error:', error);
-    res.status(500).json({ success: false, error: 'Failed to update payment method' });
+    console.error('=== UPDATE PAYMENT METHOD ERROR ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Full error:', JSON.stringify(error, null, 2));
+    console.log('=== UPDATE PAYMENT METHOD END (ERROR) ===');
+    
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to update payment method',
+      details: error.message 
+    });
   }
 };
 
 export const deletePaymentMethod = async (req: Request, res: Response) => {
+  console.log('=== DELETE PAYMENT METHOD START ===');
+  console.log('Request params:', req.params);
+  console.log('Request user:', (req as any).user);
+  
   try {
     const userId = (req as any).user?.userId;
     const { id } = req.params;
-
+    
+    console.log('Extracted data:', { userId, id });
+    
+    console.log('Looking for payment method with id:', id, 'and userId:', userId);
     const paymentMethod = await UserPaymentMethod.findOne({
       where: { id, userId }
     });
-
+    
+    console.log('Found payment method:', paymentMethod ? JSON.stringify(paymentMethod, null, 2) : 'NOT FOUND');
+    
     if (!paymentMethod) {
+      console.error('Payment method not found');
       return res.status(404).json({ error: 'Payment method not found' });
     }
-
+    
+    console.log('Deleting payment method...');
     await paymentMethod.destroy();
-
-    res.json({ success: true, message: 'Payment method deleted' });
+    console.log('Payment method deleted successfully');
+    
+    const response = { success: true, message: 'Payment method deleted' };
+    console.log('Sending response:', response);
+    console.log('=== DELETE PAYMENT METHOD END (SUCCESS) ===');
+    
+    res.json(response);
   } catch (error: any) {
-    console.error('Delete payment method error:', error);
-    res.status(500).json({ success: false, error: 'Failed to delete payment method' });
+    console.error('=== DELETE PAYMENT METHOD ERROR ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Full error:', JSON.stringify(error, null, 2));
+    console.log('=== DELETE PAYMENT METHOD END (ERROR) ===');
+    
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to delete payment method',
+      details: error.message 
+    });
   }
 };
 
 export const chapaWebhook = async (req: Request, res: Response) => {
+  console.log('=== CHAPA WEBHOOK START ===');
+  console.log('Webhook headers:', req.headers);
+  console.log('Webhook body:', JSON.stringify(req.body, null, 2));
+  console.log('Webhook query:', req.query);
+  
   try {
     const { tx_ref, status, amount } = req.body;
-
-    console.log('Chapa Webhook received:', { tx_ref, status, amount });
+    console.log('Parsed webhook data:', { tx_ref, status, amount });
+    console.log('Full webhook body:', JSON.stringify(req.body, null, 2));
 
     // Find the payment record by transaction reference
+    console.log('Looking for payment with tx_ref:', tx_ref);
     const payment = await Payment.findOne({ where: { transactionId: tx_ref } });
+    
+    console.log('Payment found:', payment ? JSON.stringify(payment, null, 2) : 'NOT FOUND');
+    
     if (!payment) {
       console.error('Payment not found for tx_ref:', tx_ref);
       return res.status(404).json({ error: 'Payment not found' });
     }
 
     // Find the associated order
+    console.log('Looking for order with id:', payment.orderId);
     const order = await Order.findByPk(payment.orderId);
+    
+    console.log('Order found:', order ? JSON.stringify(order, null, 2) : 'NOT FOUND');
+    
     if (!order) {
       console.error('Order not found for payment:', payment.id);
       return res.status(404).json({ error: 'Order not found' });
     }
 
     // Update payment and order status based on webhook data
+    console.log('Updating payment and order with status:', status);
+    
     if (status === 'success') {
+      console.log('Processing successful payment...');
       await payment.update({ status: 'completed' });
+      console.log('Payment updated to completed');
       await order.update({ paymentStatus: 'paid' });
+      console.log('Order updated to paid');
       console.log('Payment completed successfully for tx_ref:', tx_ref);
     } else {
+      console.log('Processing failed payment...');
       await payment.update({ status: 'failed' });
+      console.log('Payment updated to failed');
       await order.update({ paymentStatus: 'failed' });
+      console.log('Order updated to failed');
       console.log('Payment failed for tx_ref:', tx_ref);
     }
 
     // Respond to Chapa to acknowledge receipt
+    console.log('Sending success response to Chapa');
+    console.log('=== CHAPA WEBHOOK END (SUCCESS) ===');
+    
     res.status(200).json({ message: 'Webhook processed successfully' });
   } catch (error: any) {
-    console.error('Chapa webhook error:', error);
-    res.status(500).json({ error: 'Webhook processing failed' });
+    console.error('=== CHAPA WEBHOOK ERROR ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Full error:', JSON.stringify(error, null, 2));
+    console.log('=== CHAPA WEBHOOK END (ERROR) ===');
+    
+    res.status(500).json({ 
+      error: 'Webhook processing failed',
+      details: error.message 
+    });
   }
 };

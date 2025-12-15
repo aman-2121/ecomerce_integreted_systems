@@ -38,7 +38,7 @@ export const createProduct = async (req: Request, res: Response) => {
     if (isNaN(priceNum) || priceNum <= 0) return res.status(400).json({ error: 'Invalid price' });
     if (isNaN(stockNum) || stockNum < 0) return res.status(400).json({ error: 'Invalid stock' });
 
-    let finalCategoryId: number | null = null;
+    let finalCategoryId: number | undefined;
 
     try {
       if (categoryId) {
@@ -52,7 +52,7 @@ export const createProduct = async (req: Request, res: Response) => {
       }
     } catch (categoryError) {
       console.warn('Categories table not available, creating product without category:', categoryError);
-      finalCategoryId = null;
+      finalCategoryId = undefined;
     }
 
     const product = await Product.create({

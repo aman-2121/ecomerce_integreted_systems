@@ -68,7 +68,7 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
           orderId: order.id,
           productId: item.productId,
           quantity: item.quantity,
-          price: product.price
+          unitPrice: product.price
         });
 
         // Reduce stock

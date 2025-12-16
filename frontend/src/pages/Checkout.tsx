@@ -290,7 +290,7 @@ const Checkout: React.FC = () => {
                           <h4 className="font-medium text-gray-900 dark:text-white">{item.name}</h4>
                           <p className="text-sm text-gray-600 dark:text-gray-300">Qty: {item.quantity}</p>
                         </div>
-                        <span className="font-medium text-gray-900 dark:text-white">${(item.price * item.quantity).toFixed(2)}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{(item.price * item.quantity).toFixed(2)} Birr</span>
                       </div>
                     ))
                   )}
@@ -333,7 +333,7 @@ const Checkout: React.FC = () => {
                   ) : cartItems.length === 0 ? (
                     'Add items to cart to checkout'
                   ) : (
-                    `Pay with Chapa - $${total.toFixed(2)}`
+                    `Pay with Chapa - ${total.toFixed(2)} Birr`
                   )}
                 </button>
 

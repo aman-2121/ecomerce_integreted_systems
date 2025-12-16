@@ -51,3 +51,11 @@ export const deletePaymentMethod = async (id: number): Promise<void> => {
     headers: { Authorization: `Bearer ${token}` }
   });
 };
+
+export const verifyPayment = async (tx_ref: string): Promise<{ success: boolean; message?: string }> => {
+  const token = localStorage.getItem('token');
+  const response = await axios.post(`${API_BASE_URL}/payments/verify`, { tx_ref }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};

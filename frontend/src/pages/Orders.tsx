@@ -45,7 +45,7 @@ const Orders: React.FC = () => {
   };
 
   const getPaymentStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'paid': return 'badge-success';
       case 'pending': return 'badge-warning';
       case 'failed': return 'badge-error';
@@ -135,7 +135,7 @@ const Orders: React.FC = () => {
                   <div className="flex items-center space-x-6 mt-4 lg:mt-0">
                     <div className="text-right">
                       <p className="text-2xl font-bold text-blue-600">
-                        ${(Number(order.totalAmount) || 0).toFixed(2)}
+                        {(Number(order.totalAmount) || 0).toFixed(2)} Birr
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-300">Total Amount</p>
                     </div>

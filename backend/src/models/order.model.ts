@@ -25,6 +25,7 @@ class Order extends Model<OrderAttributes, OrderCreationAttributes> implements O
   public paymentTxRef?: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+  Payments: any;
 }
 
 Order.init(

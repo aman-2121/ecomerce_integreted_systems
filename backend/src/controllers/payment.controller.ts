@@ -398,3 +398,100 @@ export const chapaWebhook = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const verifyPayment = async (req: Request, res: Response) => {
+  console.log('=== VERIFY PAYMENT START ===');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('Request user:', (req as any).user);
+
+  try {
+    const { tx_ref } = req.body;
+    console.log('Parsed tx_ref:', tx_ref);
+
+    if (!tx_ref) {
+      console.error('No tx_ref provided');
+      return res.status(400).json({ success: false, error: 'Transaction reference is required' });
+    }
+
+    // Find the payment record by transaction reference
+    console.log('Looking for payment with tx_ref:', tx_ref);
+    const payment = await Payment.findOne({ where: { transactionId: tx_ref } });
+
+    console.log('Payment found:', payment ? JSON.stringify(payment, null, 2) : 'NOT FOUND');
+
+    if (!payment) {
+      console.error('Payment not found for tx_ref:', tx_ref);
+      return res.status(404).json({ success: false, error: 'Payment not found' });
+    }
+
+    // Find the associated order
+    console.log('Looking for order with id:', payment.orderId);
+    const order = await Order.findByPk(payment.orderId);
+
+    console.log('Order found:', order ? JSON.stringify(order, null, 2) : 'NOT FOUND');
+
+    if (!order) {
+      console.error('Order not found for payment:', payment.id);
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+
+    // Check if payment is already completed
+    if (payment.status === 'completed' && order.paymentStatus === 'paid') {
+      console.log('Payment already completed and order marked as paid');
+      return res.json({ success: true, message: 'Payment already verified' });
+    }
+
+    // Always try to verify with Chapa API first
+    console.log('Verifying payment status with Chapa API...');
+    try {
+      const chapaResponse = await axios.get(`${process.env.CHAPA_BASE_URL}/transaction/verify/${tx_ref}`, {
+        headers: {
+          'Authorization': `Bearer ${process.env.CHAPA_SECRET_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Chapa verification response:', JSON.stringify(chapaResponse.data, null, 2));
+
+      const { status, data } = chapaResponse.data;
+
+      if (status === 'success' && data?.status === 'success') {
+        console.log('Payment verified as successful, updating records...');
+        await payment.update({ status: 'completed' });
+        await order.update({ paymentStatus: 'paid' });
+        console.log('Payment and order updated successfully');
+        return res.json({ success: true, message: 'Payment verified and order updated' });
+      } else {
+        console.log('Payment verification failed or pending');
+        return res.json({ success: false, message: 'Payment not completed' });
+      }
+    } catch (chapaError: any) {
+      console.error('Chapa API verification failed:', chapaError.message);
+      console.log('Falling back to manual verification...');
+
+      // Fallback: If Chapa API fails, check if we should manually mark as paid
+      // This is a safety mechanism in case webhook fails
+      console.log('Checking if we should manually update payment status...');
+
+      // For now, we'll be conservative and not auto-update
+      // In production, you might want to add business logic here
+      console.log('Manual verification not implemented - payment status unchanged');
+      return res.json({ success: false, message: 'Payment verification unavailable, please check with support' });
+    }
+
+    console.log('=== VERIFY PAYMENT END ===');
+  } catch (error: any) {
+    console.error('=== VERIFY PAYMENT ERROR ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Full error:', JSON.stringify(error, null, 2));
+    console.log('=== VERIFY PAYMENT END (ERROR) ===');
+
+    res.status(500).json({
+      success: false,
+      error: 'Payment verification failed',
+      details: error.message
+    });
+  }
+};

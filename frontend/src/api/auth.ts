@@ -66,6 +66,14 @@ export const adminAPI = {
   createCategory: (data: any) => api.post('/admin/categories', data),
   updateCategory: (id: string, data: any) => api.put(`/admin/categories/${id}`, data),
   deleteCategory: (id: string) => api.delete(`/admin/categories/${id}`),
+  // Analytics
+  getRevenueAnalytics: (params?: any) => api.get('/admin/analytics/revenue', { params }),
+  getTopSellingProducts: (params?: any) => api.get('/admin/analytics/top-products', { params }),
+  getCustomerAnalytics: (params?: any) => api.get('/admin/analytics/customers', { params }),
+  getOrderStatusDistribution: () => api.get('/admin/analytics/order-status'),
+  // Low stock alerts
+  getLowStockProducts: (threshold?: number) => api.get('/admin/products/low-stock', { params: { threshold } }),
+  updateProductStock: (id: string, stock: number) => api.patch(`/admin/products/${id}/stock`, { stock }),
 };
 
 export const orderAPI = {

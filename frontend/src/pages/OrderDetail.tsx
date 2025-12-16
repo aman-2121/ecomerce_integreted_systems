@@ -142,7 +142,7 @@ const OrderDetail: React.FC = () => {
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Order Items</h2>
             <div className="space-y-4">
-              {order.orderItems.map((item) => (
+              {order.orderItems && order.orderItems.map((item) => (
                 <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                   <img
                     src={item.product.image ? item.product.image : '/placeholder.png'}
@@ -165,10 +165,10 @@ const OrderDetail: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      ${(Number(item.price) * item.quantity).toFixed(2)}
+                      {(Number(item.price) * item.quantity).toFixed(2)} Birr
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      ${Number(item.price).toFixed(2)} each
+                      {Number(item.price).toFixed(2)} Birr each
                     </p>
                   </div>
                 </div>

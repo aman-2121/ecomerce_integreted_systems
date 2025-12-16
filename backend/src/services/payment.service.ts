@@ -59,6 +59,7 @@ export class PaymentService {
         tx_ref,
         callback_url: `${process.env.FRONTEND_URL}/api/payments/callback`,
         return_url: `${process.env.FRONTEND_URL}/payment/success?tx_ref=${tx_ref}`,
+        webhook_url: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/payments/chapa-webhook`,
         customization: {
           title: 'E-Com Ethiopia',
           description: 'Thank you for shopping with us',

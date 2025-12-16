@@ -15,6 +15,13 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
+  getRevenueAnalytics,
+  getTopSellingProducts,
+  getCustomerAnalytics,
+  getOrderStatusDistribution,
+  getLowStockProducts,
+  updateProductStock,
+  updatePaymentStatus,
 } from '../controllers/admin.controller';
 import { authMiddleware } from '../middleware/auth';
 
@@ -46,6 +53,16 @@ router.delete('/products/:id', deleteProduct);
 // Dashboard and analytics
 router.get('/dashboard-stats', getDashboardStats);
 
+// Analytics routes
+router.get('/analytics/revenue', getRevenueAnalytics);
+router.get('/analytics/top-products', getTopSellingProducts);
+router.get('/analytics/customers', getCustomerAnalytics);
+router.get('/analytics/order-status', getOrderStatusDistribution);
+
+// Low stock alerts
+router.get('/products/low-stock', getLowStockProducts);
+router.patch('/products/:id/stock', updateProductStock);
+
 // User management
 router.get('/users', getAllUsers);
 router.delete('/users/:id', deleteUser);
@@ -55,5 +72,8 @@ router.get('/categories', getAllCategories);
 router.post('/categories', createCategory);
 router.put('/categories/:id', updateCategory);
 router.delete('/categories/:id', deleteCategory);
+
+// Payment management
+router.patch('/orders/payment-status', updatePaymentStatus);
 
 export default router;

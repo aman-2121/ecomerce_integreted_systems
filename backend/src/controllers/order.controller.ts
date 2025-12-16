@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { Order, OrderItem, Product, User } from '../models';
+import { Order, OrderItem, Product, User, Payment } from '../models';
+import { PaymentService } from '../services/payment.service';
 
 export const createOrder = async (req: Request, res: Response): Promise<void> => {
   console.log('=== CREATE ORDER START ===');
@@ -135,6 +136,10 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
 export const getUserOrders = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user?.userId;
+
+    // First, check for any pending payments and try to update their status
+    await checkAndUpdatePendingPayments(userId);
+
     const orders = await Order.findAll({
       where: { userId },
       include: [
@@ -213,6 +218,9 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
 
 export const getAllOrders = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Check for any pending payments and try to update their status
+    await checkAndUpdateAllPendingPayments();
+
     const orders = await Order.findAll({
       include: [
         {
@@ -229,3 +237,72 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+// Helper function to check and update pending payments for a specific user
+async function checkAndUpdatePendingPayments(userId: number) {
+  try {
+    console.log('Checking pending payments for user:', userId);
+
+    // Find orders with pending payment status for this user
+    const pendingOrders = await Order.findAll({
+      where: { userId, paymentStatus: 'pending' },
+      include: [{ model: Payment }]
+    });
+
+    console.log('Found pending orders:', pendingOrders.length);
+
+    for (const order of pendingOrders) {
+      const orderWithPayments = order as any;
+      if (orderWithPayments.Payments && orderWithPayments.Payments.length > 0 && orderWithPayments.Payments[0].transactionId) {
+        try {
+          // Verify payment status with Chapa API
+          const chapaResponse = await PaymentService.verifyChapaPayment(orderWithPayments.Payments[0].transactionId);
+
+          if (chapaResponse.status === 'success') {
+            console.log('Updating order and payment to paid for tx_ref:', orderWithPayments.Payments[0].transactionId);
+            await order.update({ paymentStatus: 'paid' });
+            await orderWithPayments.Payments[0].update({ status: 'completed' });
+          }
+        } catch (error) {
+          console.error('Error verifying payment for tx_ref:', orderWithPayments.Payments[0].transactionId, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in checkAndUpdatePendingPayments:', error);
+  }
+}
+
+// Helper function to check and update all pending payments (for admin)
+async function checkAndUpdateAllPendingPayments() {
+  try {
+    console.log('Checking all pending payments');
+
+    // Find all orders with pending payment status
+    const pendingOrders = await Order.findAll({
+      where: { paymentStatus: 'pending' },
+      include: [{ model: Payment }]
+    });
+
+    console.log('Found pending orders:', pendingOrders.length);
+
+    for (const order of pendingOrders) {
+      if (order.Payments && order.Payments.length > 0 && order.Payments[0].transactionId) {
+        try {
+          // Verify payment status with Chapa API
+          const chapaResponse = await PaymentService.verifyChapaPayment(order.Payments[0].transactionId);
+
+          if (chapaResponse.status === 'success') {
+            console.log('Updating order and payment to paid for tx_ref:', order.Payments[0].transactionId);
+            await order.update({ paymentStatus: 'paid' });
+            await order.Payments[0].update({ status: 'completed' });
+          }
+        } catch (error) {
+          console.error('Error verifying payment for tx_ref:', order.Payments[0].transactionId, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in checkAndUpdateAllPendingPayments:', error);
+  }
+}

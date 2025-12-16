@@ -1,19 +1,39 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { verifyPayment } from '../api/payment';
 
 const PaymentSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('orderId');
+  const tx_ref = searchParams.get('tx_ref');
   const [loading, setLoading] = useState(true);
+  const [verificationStatus, setVerificationStatus] = useState<'pending' | 'success' | 'failed'>('pending');
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000);
+    const verifyPaymentStatus = async () => {
+      if (tx_ref) {
+        try {
+          console.log('Verifying payment with tx_ref:', tx_ref);
+          const response = await verifyPayment(tx_ref);
+          console.log('Verification response:', response);
 
-    return () => clearTimeout(timer);
-  }, []);
+          if (response.success) {
+            setVerificationStatus('success');
+          } else {
+            setVerificationStatus('failed');
+          }
+        } catch (error) {
+          console.error('Payment verification failed:', error);
+          setVerificationStatus('failed');
+        }
+      }
+
+      // Set loading to false after verification attempt
+      setLoading(false);
+    };
+
+    verifyPaymentStatus();
+  }, [tx_ref]);
 
   if (loading) {
     return (
@@ -26,41 +46,73 @@ const PaymentSuccess: React.FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto text-center py-12">
-      <div className="bg-green-50 border border-green-200 rounded-lg p-8">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Payment Successful!</h1>
-        
-        <p className="text-gray-600 mb-6 text-lg">
-          Thank you for your purchase. Your order has been confirmed and will be shipped soon.
-        </p>
-
-        {orderId && (
-          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 inline-block">
-            <p className="text-sm text-gray-600">Order ID</p>
-            <p className="font-mono font-bold text-gray-900">{orderId}</p>
+      {verificationStatus === 'failed' ? (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-8">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </div>
-        )}
 
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            A confirmation email has been sent to your email address.
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Payment Verification Failed</h1>
+
+          <p className="text-gray-600 mb-6 text-lg">
+            We couldn't verify your payment at this time. Please contact support if you were charged.
           </p>
-          
+
+          {orderId && (
+            <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 inline-block">
+              <p className="text-sm text-gray-600">Order ID</p>
+              <p className="font-mono font-bold text-gray-900">{orderId}</p>
+            </div>
+          )}
+
           <div className="flex justify-center space-x-4 pt-6">
             <Link to="/orders" className="btn-primary">
               View Orders
             </Link>
-            <Link to="/products" className="btn-outline">
-              Continue Shopping
+            <Link to="/support" className="btn-outline">
+              Contact Support
             </Link>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-8">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Payment Successful!</h1>
+
+          <p className="text-gray-600 mb-6 text-lg">
+            Thank you for your purchase. Your order has been confirmed and will be shipped soon.
+          </p>
+
+          {orderId && (
+            <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 inline-block">
+              <p className="text-sm text-gray-600">Order ID</p>
+              <p className="font-mono font-bold text-gray-900">{orderId}</p>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              A confirmation email has been sent to your email address.
+            </p>
+
+            <div className="flex justify-center space-x-4 pt-6">
+              <Link to="/orders" className="btn-primary">
+                View Orders
+              </Link>
+              <Link to="/products" className="btn-outline">
+                Continue Shopping
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Order Timeline */}
       <div className="mt-12 text-left">

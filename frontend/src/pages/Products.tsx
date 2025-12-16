@@ -12,8 +12,6 @@ interface Product {
   image: string | null;
   stock: number;
   category?: string;
-  rating?: number;
-  reviewCount?: number;
 }
 
 const Products: React.FC = () => {
@@ -23,7 +21,7 @@ const Products: React.FC = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
-  const [selectedRating, setSelectedRating] = useState('Any Rating');
+
 
   useEffect(() => {
     fetchProducts();
@@ -31,7 +29,7 @@ const Products: React.FC = () => {
 
   useEffect(() => {
     filterProducts();
-  }, [products, searchTerm, selectedCategory, selectedRating]);
+  }, [products, searchTerm, selectedCategory]);
 
   const fetchProducts = async () => {
     try {
@@ -61,11 +59,7 @@ const Products: React.FC = () => {
       filtered = filtered.filter(product => product.category === selectedCategory);
     }
 
-    // Rating filter
-    if (selectedRating !== 'Any Rating') {
-      const minRating = parseFloat(selectedRating);
-      filtered = filtered.filter(product => (product.rating || 0) >= minRating);
-    }
+
 
     setFilteredProducts(filtered);
   };
@@ -128,18 +122,7 @@ const Products: React.FC = () => {
               ))}
             </select>
 
-            {/* Rating Filter */}
-            <select
-              value={selectedRating}
-              onChange={(e) => setSelectedRating(e.target.value)}
-              className="px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-colors"
-            >
-              <option value="Any Rating">Any Rating</option>
-              <option value="4.5">4.5+ Stars</option>
-              <option value="4.0">4.0+ Stars</option>
-              <option value="3.5">3.5+ Stars</option>
-              <option value="3.0">3.0+ Stars</option>
-            </select>
+
           </div>
 
           {/* Results Counter */}

@@ -14,9 +14,9 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
     // Get total products count
     const totalProducts = await Product.count();
 
-    // Get total revenue (sum of all delivered orders)
+    // Get total revenue (sum of all paid orders)
     const totalRevenueResult = await Order.sum('totalAmount', {
-      where: { status: 'delivered' }
+      where: { paymentStatus: 'paid' }
     });
     const totalRevenue = totalRevenueResult || 0;
 
@@ -738,6 +738,82 @@ export const exportOrders = async (req: Request, res: Response): Promise<void> =
     res.json({ orders });
   } catch (error) {
     console.error('Export orders error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Low stock products function
+export const getLowStockProducts = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const threshold = parseInt(req.query.threshold as string) || 3;
+
+    const lowStockProducts = await Product.findAll({
+      where: {
+        stock: {
+          [Op.lte]: threshold
+        }
+      },
+      order: [['stock', 'ASC']]
+    });
+
+    res.json({ lowStockProducts });
+  } catch (error) {
+    console.error('Get low stock products error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Update product stock function
+export const updateProductStock = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { stock } = req.body;
+
+    if (typeof stock !== 'number' || stock < 0) {
+      res.status(400).json({ error: 'Invalid stock value' });
+      return;
+    }
+
+    const product = await Product.findByPk(id);
+    if (!product) {
+      res.status(404).json({ error: 'Product not found' });
+      return;
+    }
+
+    await product.update({ stock });
+    res.json({ product });
+  } catch (error) {
+    console.error('Update product stock error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Manual payment status update for testing/admin purposes
+export const updatePaymentStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { orderId, paymentStatus } = req.body;
+
+    if (!orderId || !paymentStatus) {
+      res.status(400).json({ error: 'Order ID and payment status are required' });
+      return;
+    }
+
+    const validStatuses = ['pending', 'paid', 'failed'];
+    if (!validStatuses.includes(paymentStatus)) {
+      res.status(400).json({ error: 'Invalid payment status' });
+      return;
+    }
+
+    const order = await Order.findByPk(orderId);
+    if (!order) {
+      res.status(404).json({ error: 'Order not found' });
+      return;
+    }
+
+    await order.update({ paymentStatus });
+    res.json({ order });
+  } catch (error) {
+    console.error('Update payment status error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

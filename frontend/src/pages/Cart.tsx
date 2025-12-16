@@ -130,7 +130,7 @@ const Cart: React.FC = () => {
                     />
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold">{item.name}</h3>
-                      <p className="text-gray-600 dark:text-gray-300">${item.price.toFixed(2)}</p>
+                      <p className="text-gray-600 dark:text-gray-300">{item.price.toFixed(2)} Birr</p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
@@ -169,7 +169,7 @@ const Cart: React.FC = () => {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between">
                   <span>Subtotal ({items.length} items)</span>
-                  <span>${totalPrice.toFixed(2)}</span>
+                  <span>{totalPrice.toFixed(2)} Birr</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
@@ -178,7 +178,7 @@ const Cart: React.FC = () => {
                 <hr className="my-2" />
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total</span>
-                  <span>${totalPrice.toFixed(2)}</span>
+                  <span>{totalPrice.toFixed(2)} Birr</span>
                 </div>
               </div>
               <button

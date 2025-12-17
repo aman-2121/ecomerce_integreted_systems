@@ -269,7 +269,7 @@ const Profile: React.FC = () => {
                 </div>
               </button>
 
-              <button
+              {/* <button
                 onClick={() => navigate('/payment-methods')}
                 className="w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
@@ -281,7 +281,7 @@ const Profile: React.FC = () => {
                   </div>
                   <span className="font-medium text-gray-900 dark:text-white">Payment Methods</span>
                 </div>
-              </button>
+              </button> */}
             </div>
           </div>
         </div>

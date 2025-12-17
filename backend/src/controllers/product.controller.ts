@@ -1,12 +1,35 @@
 // backend/src/controllers/product.controller.ts
 import { Request, Response } from 'express';
-import { Product, Category } from '../models';
+import { Product, Category, OrderItem, Order } from '../models';
+import { Op } from 'sequelize';
 
 export const getAllProducts = async (req: Request, res: Response) => {
   try {
     const products = await Product.findAll({ include: [Category] });
 
-    res.json({ products });
+    // Add sales count to each product
+    const productsWithSalesCount = await Promise.all(
+      products.map(async (product) => {
+        try {
+          const salesCount = await OrderItem.count({
+            where: { productId: product.id }
+          });
+
+          return {
+            ...product.toJSON(),
+            salesCount
+          };
+        } catch (countError) {
+          console.warn(`Error counting sales for product ${product.id}:`, countError);
+          return {
+            ...product.toJSON(),
+            salesCount: 0
+          };
+        }
+      })
+    );
+
+    res.json({ products: productsWithSalesCount });
   } catch (error: any) {
     console.error('Get products error:', error);
     res.status(500).json({ error: 'Server error' });

@@ -220,14 +220,15 @@ export const getTopSellingProducts = async (req: Request, res: Response): Promis
         p.name,
         p.price,
         p.image,
+        p.stock,
         SUM(oi.quantity) as salesCount,
-        SUM(oi.quantity * oi.price) as totalRevenue
+        SUM(oi.quantity * oi."unitPrice") as totalRevenue
       FROM products p
-      JOIN order_items oi ON p.id = oi."productId"
-      JOIN orders o ON oi."orderId" = o.id
-      WHERE o.status = 'delivered' ${dateFilter}
-      GROUP BY p.id, p.name, p.price, p.image
-      ORDER BY salesCount DESC
+      INNER JOIN order_items oi ON p.id = oi."productId"
+      INNER JOIN orders o ON oi."orderId" = o.id ${dateFilter}
+      WHERE o."paymentStatus" = 'paid' AND (o.status IS NULL OR o.status != 'cancelled')
+      GROUP BY p.id, p.name, p.price, p.image, p.stock
+      ORDER BY salesCount DESC, p.name ASC
       LIMIT ${parseInt(limit as string)}
     `, {
       type: QueryTypes.SELECT

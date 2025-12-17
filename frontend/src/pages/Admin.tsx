@@ -65,6 +65,7 @@ const Admin: React.FC = () => {
   const [topSellingProducts, setTopSellingProducts] = useState<any[]>([]);
   const [customerAnalytics, setCustomerAnalytics] = useState<any>({ newCustomers: [], totalCustomers: 0, activeCustomers: 0 });
   const [orderStatusDistribution, setOrderStatusDistribution] = useState<any[]>([]);
+  const [topProductsLoading, setTopProductsLoading] = useState(false);
 
   // Low stock state
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
@@ -136,16 +137,30 @@ const Admin: React.FC = () => {
 
       // Calculate analytics data
       const revenueData = calculateRevenueAnalytics(oRes.data.orders || []);
-      const topSelling = calculateTopSellingProducts(oRes.data.orders || [], pRes.data.products || []);
       const customerData = calculateCustomerAnalytics(uRes.data.users || [], oRes.data.orders || []);
       const orderStatusData = calculateOrderStatusDistribution(oRes.data.orders || []);
 
       setRevenueAnalytics(revenueData);
-      setTopSellingProducts(topSelling);
       setCustomerAnalytics(customerData);
       setOrderStatusDistribution(orderStatusData);
+
+      // Load top selling products from API
+      await loadTopSellingProducts();
     } catch (err) {
       console.error('Failed to load data:', err);
+    }
+  };
+
+  const loadTopSellingProducts = async () => {
+    try {
+      setTopProductsLoading(true);
+      const response = await adminAPI.getTopSellingProducts({ limit: 10 });
+      setTopSellingProducts(response.data.topProducts || []);
+    } catch (err) {
+      console.error('Failed to load top selling products:', err);
+      setTopSellingProducts([]);
+    } finally {
+      setTopProductsLoading(false);
     }
   };
 
@@ -237,6 +252,7 @@ const Admin: React.FC = () => {
       category: p.category || ''
     });
     setShowProductForm(true);
+    setActiveTab('products'); // Switch to products tab to show the form
   };
 
   const deleteProduct = async (id: number) => {
@@ -326,143 +342,58 @@ const Admin: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
-      <div className="w-64 bg-white dark:bg-gray-800 shadow-xl">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <div className="flex">
+        {/* Sidebar */}
+        <div className="w-64 bg-white dark:bg-gray-800 shadow-lg min-h-screen">
+          <div className="p-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Panel</h2>
+          </div>
+          <nav className="mt-6">
+            {[
+              { key: 'dashboard', label: '📊 Dashboard' },
+              { key: 'analytics', label: '📈 Analytics' },
+              { key: 'products', label: '📦 Products' },
+              { key: 'categories', label: '📁 Categories' },
+              { key: 'orders', label: '📋 Orders' },
+              { key: 'users', label: '👥 Users' },
+              { key: 'low-stock', label: '⚠️ Low Stock' },
+              { key: 'top-products', label: '🏆 Top Products' }
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key as typeof activeTab)}
+                className={`w-full text-left px-6 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 ${activeTab === tab.key ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
         </div>
-        <nav className="mt-6">
-          <div className="px-3">
-            <button
-              onClick={() => handleTabChange('dashboard')}
-              className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors duration-200 ${
-                activeTab === 'dashboard'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              <span className="mr-3">📊</span>
-              Dashboard
-            </button>
-            <button
-              onClick={() => handleTabChange('analytics')}
-              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
-                activeTab === 'analytics'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              <span className="mr-3">📈</span>
-              Analytics
-            </button>
-            <button
-              onClick={() => handleTabChange('products')}
-              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
-                activeTab === 'products'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              <span className="mr-3">📦</span>
-              Products
-            </button>
-            <button
-              onClick={() => handleTabChange('categories')}
-              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
-                activeTab === 'categories'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              <span className="mr-3">📁</span>
-              Categories
-            </button>
-            <button
-              onClick={() => handleTabChange('orders')}
-              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
-                activeTab === 'orders'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              <span className="mr-3">📋</span>
-              Orders
-            </button>
-            <button
-              onClick={() => handleTabChange('users')}
-              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
-                activeTab === 'users'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              <span className="mr-3">👥</span>
-              Users
-            </button>
-            <button
-              onClick={() => handleTabChange('low-stock')}
-              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
-                activeTab === 'low-stock'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              <span className="mr-3">⚠️</span>
-              Low Stock
-            </button>
-            <button
-              onClick={() => handleTabChange('top-products')}
-              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
-                activeTab === 'top-products'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              <span className="mr-3">🏆</span>
-              Top Products
-            </button>
-          </div>
-        </nav>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Top Header */}
-        <header className="bg-white dark:bg-gray-800 shadow p-4 flex justify-between items-center">
-          <div></div> {/* Spacer for center alignment if needed */}
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={toggleDarkMode}
-              className="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-            >
-              <span className="mr-2">{isDarkMode ? '☀️' : '🌙'}</span>
-              {isDarkMode ? 'Light' : 'Dark'}
-            </button>
-            <button
-              onClick={() => navigate('/profile')}
-              className="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-            >
-              <span className="mr-2">👤</span>
-              Profile
-            </button>
-            <button
-              onClick={logout}
-              className="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900"
-            >
-              <span className="mr-2">🚪</span>
-              Logout
-            </button>
-          </div>
-        </header>
 
         {/* Main Content */}
-        <div className="flex-1 p-8">
-          {message && (
-            <div className={`p-4 rounded-lg mb-6 text-center text-lg font-medium ${message.includes('Error') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-              {message}
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <div className="bg-white dark:bg-gray-800 shadow p-4 flex justify-between items-center">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+            <div className="flex items-center space-x-4">
+              <button onClick={() => navigate('/profile')} className="p-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white">
+                👤 Profile
+              </button>
+              <button onClick={toggleDarkMode} className="p-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white">
+                {isDarkMode ? '🌙' : '☀️'}
+              </button>
+              <button onClick={logout} className="p-2 rounded bg-red-500 text-white">🚪 Logout</button>
             </div>
-          )}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 p-6">
+            {message && (
+              <div className={`p-4 rounded-lg mb-6 text-center text-lg font-medium ${message.includes('Error') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                {message}
+              </div>
+            )}
 
           {/* DASHBOARD */}
           {activeTab === 'dashboard' && (
@@ -1001,7 +932,7 @@ const Admin: React.FC = () => {
                         #{index + 1}
                       </div>
                       <div className="absolute top-4 right-4 bg-gradient-to-r from-green-500 to-teal-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                        {product.sales} sold
+                        {product.salesCount} sold
                       </div>
                     </div>
                     <div className="p-6">
@@ -1038,11 +969,19 @@ const Admin: React.FC = () => {
                 </div>
               )}
             </div>
+
           )}
+
+          </div>
+
         </div>
+
       </div>
+
     </div>
+
   );
+
 };
 
 export default Admin;

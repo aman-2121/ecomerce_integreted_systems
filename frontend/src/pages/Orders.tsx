@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { orderAPI } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 interface Order {
   id: number;
@@ -14,6 +15,7 @@ interface Order {
 
 const Orders: React.FC = () => {
   const { user } = useAuth();
+  const { addToCart } = useCart();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -59,6 +61,32 @@ const Orders: React.FC = () => {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const handleReorder = async (orderId: number) => {
+    try {
+      const response = await orderAPI.getById(orderId.toString());
+      const order = response.data.order;
+
+      if (order && order.orderItems) {
+        for (const item of order.orderItems) {
+          addToCart({
+            productId: item.product.id,
+            name: item.product.name,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            image: item.product.image || '/api/placeholder/100/100',
+            stock: 999 // Assume sufficient stock for reorder
+          });
+        }
+      }
+
+      // Redirect to cart page
+      window.location.href = '/cart';
+    } catch (error) {
+      console.error('Error reordering:', error);
+      alert('Failed to reorder items. Please try again.');
+    }
   };
 
   if (!user) {
@@ -148,7 +176,10 @@ const Orders: React.FC = () => {
                         View Details
                       </Link>
                       {order.status === 'delivered' && (
-                        <button className="btn-primary text-sm">
+                        <button
+                          className="btn-primary text-sm"
+                          onClick={() => handleReorder(order.id)}
+                        >
                           Reorder
                         </button>
                       )}

@@ -99,7 +99,7 @@ const Home: React.FC = () => {
             <Link
               to="/products"
               // FIXED: Removed purple gradient from button
-              className="bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-10 py-4 rounded-full text-xl font-bold transition transform hover:scale-105 shadow-xl"
+              className="bg-blue-500 dark:bg-blue-400 hover:bg-blue-600 dark:hover:bg-blue-500 text-white px-10 py-4 rounded-full text-xl font-bold transition transform hover:scale-105 shadow-xl"
             >
               View All Products →
             </Link>

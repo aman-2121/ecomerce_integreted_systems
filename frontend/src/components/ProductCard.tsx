@@ -11,7 +11,8 @@ interface Product {
   price: number | string;
   image: string | null;
   stock: number;
-  category?: string;
+  salesCount?: number;
+  Category?: { name: string; };
 }
 
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
@@ -40,6 +41,9 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
       image: product.image || '/api/placeholder/100/100',
       stock: product.stock
     });
+
+    // Redirect to cart page
+    window.location.href = '/cart';
   };
 
   const imageUrl = product.image
@@ -68,9 +72,9 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           {product.name}
         </h3>
 
-        {product.category && (
+        {product.Category?.name && (
           <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 mb-2">
-            {product.category}
+            {product.Category.name}
           </span>
         )}
 
@@ -95,19 +99,26 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
             {formatPrice(product.price)} Birr
           </span>
-          <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
-            product.stock > 0
-              ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-              : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
-          }`}>
-            {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
-          </span>
+          <div className="flex flex-col items-end gap-2">
+            {product.salesCount !== undefined && product.salesCount > 0 && (
+              <span className="px-3 py-1 rounded-full text-sm font-bold bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200">
+                {product.salesCount} sold
+              </span>
+            )}
+            <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
+              product.stock > 0
+                ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+            }`}>
+              {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+            </span>
+          </div>
         </div>
 
         <div className="flex gap-2">
           <Link
             to={`/products/${product.id}`}
-            className="flex-1 text-center bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 text-white font-bold py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 dark:hover:from-blue-600 dark:hover:to-purple-600 transition transform hover:scale-105 shadow-md"
+            className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition transform hover:scale-105 shadow-md"
           >
             View Details
           </Link>

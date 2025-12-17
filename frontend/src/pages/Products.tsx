@@ -11,7 +11,7 @@ interface Product {
   price: number;
   image: string | null;
   stock: number;
-  category?: string;
+  Category?: { name: string; };
 }
 
 const Products: React.FC = () => {
@@ -56,7 +56,7 @@ const Products: React.FC = () => {
 
     // Category filter
     if (selectedCategory !== 'All Categories') {
-      filtered = filtered.filter(product => product.category === selectedCategory);
+      filtered = filtered.filter(product => product.Category?.name === selectedCategory);
     }
 
 
@@ -64,7 +64,7 @@ const Products: React.FC = () => {
     setFilteredProducts(filtered);
   };
 
-  const categories = ['All Categories', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))];
+  const categories = ['All Categories', ...Array.from(new Set(products.map(p => p.Category?.name).filter(Boolean)))];
 
   if (loading) {
     return (

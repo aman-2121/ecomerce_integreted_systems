@@ -1,6 +1,7 @@
 import React from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useDarkModeContext } from '../context/DarkModeContext';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -8,89 +9,149 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { isDarkMode, toggleDarkMode } = useDarkModeContext();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  const adminLinks = [
-    { path: '/admin', label: 'Dashboard', icon: '📊' },
-    { path: '/admin?tab=analytics', label: 'Analytics', icon: '📈' },
-    { path: '/admin?tab=products', label: 'Products', icon: '📦' },
-    { path: '/admin?tab=categories', label: 'Categories', icon: '🏷️' },
-    { path: '/admin?tab=orders', label: 'Orders', icon: '📋' },
-    { path: '/admin?tab=users', label: 'Users', icon: '👥' },
-    { path: '/admin?tab=low-stock', label: 'Low Stock Alerts', icon: '⚠️' },
-    { path: '/admin?tab=top-products', label: 'Top Products', icon: '🏆' },
-    { path: '/admin?tab=settings', label: 'Settings', icon: '⚙️' },
-  ];
-
-  const isActive = (path: string) => {
-    if (path === '/admin') {
-      return location.pathname === '/admin' && !location.search.includes('tab=');
-    }
-    return location.search.includes(path.split('=')[1]);
+  const handleTabChange = (tab: string) => {
+    navigate(`/admin?tab=${tab}`);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
-      <div className="w-64 bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg"></div>
-            <span className="text-xl font-bold text-gray-900 dark:text-white">E-Commerce</span>
-          </Link>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Admin Panel</p>
+      <div className="w-64 bg-white dark:bg-gray-800 shadow-xl">
+        <div className="p-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
         </div>
         <nav className="mt-6">
-          <div className="px-3 space-y-1">
-            {adminLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                  isActive(link.path)
-                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                <span className="mr-3">{link.icon}</span>
-                {link.label}
-              </Link>
-            ))}
+          <div className="px-3">
+            <button
+              onClick={() => handleTabChange('dashboard')}
+              className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors duration-200 ${
+                location.pathname === '/admin' && new URLSearchParams(location.search).get('tab') === 'dashboard'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span className="mr-3">📊</span>
+              Dashboard
+            </button>
+            <button
+              onClick={() => handleTabChange('analytics')}
+              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
+                location.pathname === '/admin' && new URLSearchParams(location.search).get('tab') === 'analytics'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span className="mr-3">📈</span>
+              Analytics
+            </button>
+            <button
+              onClick={() => handleTabChange('products')}
+              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
+                location.pathname === '/admin' && new URLSearchParams(location.search).get('tab') === 'products'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span className="mr-3">📦</span>
+              Products
+            </button>
+            <button
+              onClick={() => handleTabChange('categories')}
+              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
+                location.pathname === '/admin' && new URLSearchParams(location.search).get('tab') === 'categories'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span className="mr-3">📁</span>
+              Categories
+            </button>
+            <button
+              onClick={() => handleTabChange('orders')}
+              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
+                location.pathname === '/admin' && new URLSearchParams(location.search).get('tab') === 'orders'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span className="mr-3">📋</span>
+              Orders
+            </button>
+            <button
+              onClick={() => handleTabChange('users')}
+              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
+                location.pathname === '/admin' && new URLSearchParams(location.search).get('tab') === 'users'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span className="mr-3">👥</span>
+              Users
+            </button>
+            <button
+              onClick={() => handleTabChange('low-stock')}
+              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
+                location.pathname === '/admin' && new URLSearchParams(location.search).get('tab') === 'low-stock'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span className="mr-3">⚠️</span>
+              Low Stock
+            </button>
+            <button
+              onClick={() => handleTabChange('top-products')}
+              className={`w-full flex items-center px-4 py-3 mt-2 text-left rounded-lg transition-colors duration-200 ${
+                location.pathname === '/admin' && new URLSearchParams(location.search).get('tab') === 'top-products'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span className="mr-3">🏆</span>
+              Top Products
+            </button>
           </div>
         </nav>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Top Bar */}
-        <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-          <div className="px-6 py-4 flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-              <p className="text-gray-600 dark:text-gray-400">Welcome back, {user?.name}!</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Admin Panel</span>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-              >
-                Logout
-              </button>
-            </div>
+        {/* Top Header */}
+        <header className="bg-white dark:bg-gray-800 shadow p-4 flex justify-between items-center">
+          <div></div> {/* Spacer for center alignment if needed */}
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={toggleDarkMode}
+              className="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              <span className="mr-2">{isDarkMode ? '☀️' : '🌙'}</span>
+              {isDarkMode ? 'Light' : 'Dark'}
+            </button>
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              <span className="mr-2">👤</span>
+              Profile
+            </button>
+            <button
+              onClick={logout}
+              className="flex items-center px-3 py-2 rounded-lg transition-colors duration-200 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900"
+            >
+              <span className="mr-2">🚪</span>
+              Logout
+            </button>
           </div>
-        </div>
+        </header>
 
-        {/* Page Content */}
-        <main className="flex-1 p-6">
+        {/* Main Content */}
+        <div className="flex-1 p-8">
           {children}
-        </main>
+        </div>
       </div>
     </div>
   );

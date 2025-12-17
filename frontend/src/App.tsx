@@ -1,6 +1,8 @@
 import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import AdminLayout from './components/AdminLayout';
 
 import Home from './pages/Home';
 import Products from './pages/Products';
@@ -19,12 +21,18 @@ import PaymentMethods from './pages/PaymentMethods';
 
 function App() {
   const location = useLocation();
+  const { user } = useAuth();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isAdminUserPage = user?.role === 'admin' && (location.pathname === '/profile' || location.pathname === '/change-password' || location.pathname.startsWith('/orders'));
+
+  const renderWithAdminLayout = (component: React.ReactElement) => (
+    <AdminLayout>{component}</AdminLayout>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {!isAdminRoute && <Navbar />}
-      <main className={isAdminRoute ? "" : "container mx-auto px-4 py-8"}>
+      {!isAdminRoute && !isAdminUserPage && <Navbar />}
+      <main className={isAdminRoute || isAdminUserPage ? "" : "container mx-auto px-4 py-8"}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
@@ -33,12 +41,12 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/orders/:id" element={<OrderDetail />} />
+          <Route path="/profile" element={isAdminUserPage ? renderWithAdminLayout(<Profile />) : <Profile />} />
+          <Route path="/orders" element={isAdminUserPage ? renderWithAdminLayout(<Orders />) : <Orders />} />
+          <Route path="/orders/:id" element={isAdminUserPage ? renderWithAdminLayout(<OrderDetail />) : <OrderDetail />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
-          <Route path="/change-password" element={<ChangePassword />} />
+          <Route path="/change-password" element={isAdminUserPage ? renderWithAdminLayout(<ChangePassword />) : <ChangePassword />} />
           <Route path="/payment-methods" element={<PaymentMethods />} />
         </Routes>
       </main>

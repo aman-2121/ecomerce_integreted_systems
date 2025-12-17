@@ -1,20 +1,14 @@
-# Task: Fix Payment Status Not Updating in Admin Dashboard
+# TODO: Fix E-commerce Issues
 
-## Completed Tasks
-- [x] Enhanced verifyPayment function with better error handling and fallback logic
-- [x] Added manual payment status update endpoint for admin testing
-- [x] Added admin route for manual payment status updates
-- [x] Improved webhook handling for payment status updates
+## 1. Fix Category Functionality
+- [x] Update Product interface in Products.tsx to include Category?: { name: string; }
+- [x] Update categories array in Products.tsx to use product.Category?.name
+- [x] Update filter logic in filterProducts to use product.Category?.name === selectedCategory
 
-## Pending Tasks
-- [ ] Test the payment flow to ensure payment status updates correctly
-- [ ] Verify that admin dashboard shows correct revenue after payment completion
-- [ ] Check if webhook URL is properly configured in Chapa dashboard
+## 2. Change "View Details" Button Style to Blue
+- [x] Update Product interface in ProductCard.tsx to include Category?: { name: string; }
+- [x] Change category display in ProductCard.tsx to product.Category?.name
+- [x] Change "View Details" button className from gradient to solid blue
 
-## Summary
-- Enhanced payment verification logic with better error handling
-- Added manual admin endpoint to update payment status for testing
-- Route: PATCH /api/admin/orders/payment-status
-- Body: { "orderId": "order-id", "paymentStatus": "paid" }
-
-The payment status update mechanism has been improved, but testing is needed to confirm it works correctly.
+## 3. Add Redirect to Cart Page After Add to Cart
+- [x] In ProductCard.tsx, after addToCart call, add window.location.href = '/cart';

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { orderAPI } from '../api/auth';
+import { orderAPI, productAPI } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
+import ProductCard from '../components/ProductCard';
+import { Product } from '../api/product';
 
 interface OrderItem {
   id: number;
@@ -11,6 +13,7 @@ interface OrderItem {
     id: number;
     name: string;
     image: string;
+    categoryId: number;
   };
 }
 
@@ -30,12 +33,19 @@ const OrderDetail: React.FC = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     if (id) {
       fetchOrderDetail();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (order) {
+      fetchRelatedProducts();
+    }
+  }, [order]);
 
   const fetchOrderDetail = async () => {
     try {
@@ -45,6 +55,21 @@ const OrderDetail: React.FC = () => {
       setError('Failed to fetch order details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRelatedProducts = async () => {
+    if (!order || !order.orderItems.length) return;
+
+    try {
+      const categoryId = order.orderItems[0].product.categoryId;
+      const products = await productAPI.getProducts(categoryId);
+      const filteredProducts = products.filter((product: Product) =>
+        !order.orderItems.some(item => item.product.id === product.id)
+      ).slice(0, 4);
+      setRelatedProducts(filteredProducts);
+    } catch (err) {
+      console.error('Failed to fetch related products', err);
     }
   };
 
@@ -239,6 +264,18 @@ const OrderDetail: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Related Products */}
+          {relatedProducts.length > 0 && (
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Related Products</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {relatedProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

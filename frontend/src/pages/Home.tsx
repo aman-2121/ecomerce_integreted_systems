@@ -27,50 +27,43 @@ const Home: React.FC = () => {
 
   return (
     <div className="space-y-16">
-      {/* Hero Section - FIXED: Removed purple gradient */}
-      <section className="text-center py-20 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl">
-        {/* Your hero section content */}
-        <div className="max-w-6xl mx-auto px-6 py-24">
-          <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gray-900 dark:text-white">
-              Welcome to <span className="text-blue-600 dark:text-blue-400">ShopWave</span>
-            </h1>
+      {/* Hero Section - Only show for non-admin users */}
+      {user?.role !== 'admin' && (
+        <section className="text-center py-20 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl">
+          {/* Your hero section content */}
+          <div className="max-w-6xl mx-auto px-6 py-24">
+            <div className="text-center">
+              <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gray-900 dark:text-white">
+                Welcome to <span className="text-blue-600 dark:text-blue-400">ShopWave</span>
+              </h1>
 
-            <p className="text-xl md:text-2xl mb-10 text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
-              {user ? `Hello ${user.name.split(' ')[0]}, discover our latest collections.` : 'Discover amazing products at great prices.'}
-            </p>
-
-            <div className="mb-10">
-              <p className="text-blue-600 dark:text-blue-400 font-semibold text-lg md:text-xl">
-                Free shipping - Easy returns - 5-star service
+              <p className="text-xl md:text-2xl mb-10 text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
+                {user ? `Hello ${user.name.split(' ')[0]}, discover our latest collections.` : 'Discover amazing products at great prices.'}
               </p>
-            </div>
 
-            <div className="flex flex-col sm:flex-row justify-center gap-6 mb-16">
-              <Link
-                to="/products"
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold px-12 py-5 rounded-full transition-all duration-300"
-              >
-                {user ? 'Continue Shopping' : 'Shop Now'}
-              </Link>
+              <div className="mb-10">
+                <p className="text-blue-600 dark:text-blue-400 font-semibold text-lg md:text-xl">
+                  Free shipping - Easy returns - 5-star service
+                </p>
+              </div>
 
-              {!user && (
+              <div className="flex flex-col sm:flex-row justify-center gap-6 mb-16">
                 <Link
-                  to="/register"
-                  className="border-2 border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xl font-bold px-12 py-5 rounded-full transition-all duration-300"
+                  to="/products"
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold px-12 py-5 rounded-full transition-all duration-300"
                 >
-                  Create Account
+                  {user ? 'Continue Shopping' : 'Shop Now'}
                 </Link>
-              )}
-            </div>
+              </div>
 
-            {/* Featured Products Section Heading */}
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-8">
-              Featured Products
-            </h2>
+              {/* Featured Products Section Heading */}
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-8">
+                Featured Products
+              </h2>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Featured Products Section */}
       <section className="py-16">

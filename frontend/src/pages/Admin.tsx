@@ -1,4 +1,4 @@
-// frontend/src/pages/Admin.tsx (Updated - removed navigation away from admin)
+ // frontend/src/pages/Admin.tsx (Updated - removed navigation away from admin)
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -69,6 +69,8 @@ const Admin: React.FC = () => {
   const [searchUsers, setSearchUsers] = useState('');
   const [searchLowStock, setSearchLowStock] = useState('');
   const [searchTopProducts, setSearchTopProducts] = useState('');
+  const [searchProducts, setSearchProducts] = useState('');
+  const [searchCategories, setSearchCategories] = useState('');
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
   const [bulkStatus, setBulkStatus] = useState('');
 
@@ -164,6 +166,17 @@ const Admin: React.FC = () => {
 
   const filteredTopProducts = topSellingProducts.filter(p =>
     p.name.toLowerCase().includes(searchTopProducts.toLowerCase())
+  );
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchProducts.toLowerCase()) ||
+    (product.description || '').toLowerCase().includes(searchProducts.toLowerCase()) ||
+    (product.category || '').toLowerCase().includes(searchProducts.toLowerCase())
+  );
+
+  const filteredCategories = categories.filter(category =>
+    category.name.toLowerCase().includes(searchCategories.toLowerCase()) ||
+    (category.description || '').toLowerCase().includes(searchCategories.toLowerCase())
   );
 
 
@@ -416,7 +429,7 @@ const Admin: React.FC = () => {
               <button onClick={toggleDarkMode} className="p-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white">
                 {isDarkMode ? '🌙' : '☀️'}
               </button>
-              <button onClick={() => { logout(); navigate('/'); }} className="p-2 rounded bg-red-500 text-white shadow-md hover:bg-red-600 transition-colors">🚪 Logout</button>
+              <button onClick={() => { logout(); navigate('/home'); }} className="p-2 rounded bg-red-500 text-white shadow-md hover:bg-red-600 transition-colors">🚪 Logout</button>
             </div>
           </div>
 
@@ -645,9 +658,22 @@ const Admin: React.FC = () => {
                   </div>
                 )}
 
+                <div className="mb-6">
+                  <div className="relative max-w-md">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔍</span>
+                    <input
+                      type="text"
+                      placeholder="Search products by name, description, or category..."
+                      className="pl-10 input-field w-full"
+                      value={searchProducts}
+                      onChange={(e) => setSearchProducts(e.target.value)}
+                    />
+                  </div>
+                </div>
+
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">All Products</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">All Products ({filteredProducts.length})</h3>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -682,7 +708,7 @@ const Admin: React.FC = () => {
                               {safePrice(product.price)} birr
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline - flex px - 2 py - 1 text - xs font - semibold rounded - full ${product.stock > 10 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : product.stock > 0 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'} `}>
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.stock > 10 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : product.stock > 0 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
                                 {product.stock} in stock
                               </span>
                             </td>
@@ -721,9 +747,22 @@ const Admin: React.FC = () => {
                   </div>
                 )}
 
+                <div className="mb-6">
+                  <div className="relative max-w-md">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔍</span>
+                    <input
+                      type="text"
+                      placeholder="Search categories by name or description..."
+                      className="pl-10 input-field w-full"
+                      value={searchCategories}
+                      onChange={(e) => setSearchCategories(e.target.value)}
+                    />
+                  </div>
+                </div>
+
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">All Categories</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">All Categories ({filteredCategories.length})</h3>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -853,7 +892,7 @@ const Admin: React.FC = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-bold">{safePrice(order.totalAmount)} birr</td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline - flex px - 3 py - 1 text - xs font - semibold rounded - full ${order.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} `}>
+                              <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${order.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                                 {order.paymentStatus}
                               </span>
                             </td>
@@ -916,7 +955,7 @@ const Admin: React.FC = () => {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">{u.name}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{u.email}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline - flex px - 3 py - 1 text - xs font - semibold rounded - full ${u.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'} `}>
+                            <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${u.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
                               {u.role}
                             </span>
                           </td>
@@ -995,7 +1034,7 @@ const Admin: React.FC = () => {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{safePrice(product.price)} birr</td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`inline - flex px - 2 py - 1 text - xs font - semibold rounded - full ${product.stock > 0 ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800'} `}>
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.stock > 0 ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800'}`}>
                                   {product.stock} left
                                 </span>
                               </td>

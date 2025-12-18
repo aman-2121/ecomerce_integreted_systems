@@ -1,20 +1,21 @@
-# E-commerce Project Fixes
+# E-commerce Project Fixes TODO
 
-## Navbar Focus
-- Add active state styling to navbar links (home, cart, orders, etc.) based on current route using useLocation.
+## Frontend Fixes
+- [ ] Navbar Focus & Profile Update: Ensure proper active states for navigation links and update profile dropdown to show only first name with role, profile details, and logout options
+- [ ] Hide Create Account for Logged-in Users: Conditionally hide the create account section in Home.tsx for authenticated users
+- [ ] Order Detail Related Products: Add a section showing related category products when viewing order details
+- [ ] Clear Cart After Payment: Update PaymentSuccess page to clear the cart after successful payment
+- [ ] Admin Bulk Actions: Add checkboxes and select all functionality for bulk order management in admin orders page
+- [ ] Password Change Validation: Implement validation for password changes matching registration rules
+- [ ] Admin Search Filters: Add search functionality to all admin tabs (orders, users, low stock, top products, categories)
+- [ ] Admin Logout Redirect: Update admin logout to redirect to home page instead of current behavior
+- [ ] Admin Profile Quick Action: Fix quick action link in admin profile view to navigate to user orders
 
-## Profile Section Dropdown
-- Change profile display to show only first name.
-- Convert profile section to a dropdown menu containing:
-  - User role
-  - Profile link
-  - Logout option
+## Backend Fixes
+- [ ] Admin Orders Enhancement: Update admin orders page to display product names and customer information instead of just order IDs
+- [ ] Currency Standardization: Ensure all prices display in birr format (remove any $ signs)
 
-## Home Page "Create Account" Button
-- Hide "Create Account" button for logged-in users.
-- Show button only for guest users.
-
-## ProductDetail Related Products
-- Add section to display related products from the same category.
-- Fetch related products via API call.
-- Display them in a grid below the main product details.
+## Testing
+- [ ] Test all navigation and functionality
+- [ ] Verify admin features work correctly
+- [ ] Ensure no console errors or broken links

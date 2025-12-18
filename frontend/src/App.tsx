@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import AdminLayout from './components/AdminLayout';
@@ -34,7 +34,8 @@ function App() {
       {!isAdminRoute && !isAdminUserPage && <Navbar />}
       <main className={isAdminRoute || isAdminUserPage ? "" : "container mx-auto px-4 py-8"}>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={user?.role === 'admin' ? <Navigate to="/admin" replace /> : <Navigate to="/products" replace />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />

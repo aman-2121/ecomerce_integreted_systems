@@ -16,7 +16,10 @@ const Navbar: React.FC = () => {
     navigate('/');
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === '/home' && location.pathname === '/') return true;
+    return location.pathname === path;
+  };
 
   const navLinkClass = (path: string) =>
     `transition-colors duration-200 font-medium ${isActive(path)
@@ -40,7 +43,7 @@ const Navbar: React.FC = () => {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className={navLinkClass('/')}>
+            <Link to="/home" className={navLinkClass('/home')}>
               Home
             </Link>
             <Link to="/products" className={navLinkClass('/products')}>

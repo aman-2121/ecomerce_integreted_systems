@@ -22,6 +22,7 @@ import {
   getLowStockProducts,
   updateProductStock,
   updatePaymentStatus,
+  getAllOrders,
 } from '../controllers/admin.controller';
 import { authMiddleware } from '../middleware/auth';
 
@@ -75,5 +76,8 @@ router.delete('/categories/:id', deleteCategory);
 
 // Payment management
 router.patch('/orders/payment-status', updatePaymentStatus);
+
+// Order management
+router.get('/orders', getAllOrders);
 
 export default router;

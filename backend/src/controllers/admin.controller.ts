@@ -3,6 +3,41 @@ import { User, Order, Product, Category, UserActivityLog, SystemSettings, Banner
 import { Op, QueryTypes } from 'sequelize';
 import sequelize from '../config/database';
 
+// Helper function to check and update all pending payments (for admin)
+async function checkAndUpdateAllPendingPayments() {
+  try {
+    console.log('Checking all pending payments');
+
+    // Find all orders with pending payment status
+    const pendingOrders = await Order.findAll({
+      where: { paymentStatus: 'pending' },
+      include: [{ model: require('../models/payment.model').Payment }]
+    });
+
+    console.log('Found pending orders:', pendingOrders.length);
+
+    for (const order of pendingOrders) {
+      if (order.Payments && order.Payments.length > 0 && order.Payments[0].transactionId) {
+        try {
+          // Verify payment status with Chapa API
+          const PaymentService = require('../services/payment.service').PaymentService;
+          const chapaResponse = await PaymentService.verifyChapaPayment(order.Payments[0].transactionId);
+
+          if (chapaResponse.status === 'success') {
+            console.log('Updating order and payment to paid for tx_ref:', order.Payments[0].transactionId);
+            await order.update({ paymentStatus: 'paid' });
+            await order.Payments[0].update({ status: 'completed' });
+          }
+        } catch (error) {
+          console.error('Error verifying payment for tx_ref:', order.Payments[0].transactionId, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in checkAndUpdateAllPendingPayments:', error);
+  }
+}
+
 export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
   try {
     // Get total users count
@@ -785,6 +820,27 @@ export const updateProductStock = async (req: Request, res: Response): Promise<v
     res.json({ product });
   } catch (error) {
     console.error('Update product stock error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Get all orders for admin
+export const getAllOrders = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // First, check and update all pending payments
+    await checkAndUpdateAllPendingPayments();
+
+    const orders = await Order.findAll({
+      include: [{
+        model: User,
+        attributes: ['name', 'email']
+      }],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json({ orders });
+  } catch (error) {
+    console.error('Get all orders error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

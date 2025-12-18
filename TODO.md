@@ -1,14 +1,20 @@
-# TODO: Fix E-commerce Issues
+# E-commerce Project Fixes
 
-## 1. Fix Category Functionality
-- [x] Update Product interface in Products.tsx to include Category?: { name: string; }
-- [x] Update categories array in Products.tsx to use product.Category?.name
-- [x] Update filter logic in filterProducts to use product.Category?.name === selectedCategory
+## Navbar Focus
+- Add active state styling to navbar links (home, cart, orders, etc.) based on current route using useLocation.
 
-## 2. Change "View Details" Button Style to Blue
-- [x] Update Product interface in ProductCard.tsx to include Category?: { name: string; }
-- [x] Change category display in ProductCard.tsx to product.Category?.name
-- [x] Change "View Details" button className from gradient to solid blue
+## Profile Section Dropdown
+- Change profile display to show only first name.
+- Convert profile section to a dropdown menu containing:
+  - User role
+  - Profile link
+  - Logout option
 
-## 3. Add Redirect to Cart Page After Add to Cart
-- [x] In ProductCard.tsx, after addToCart call, add window.location.href = '/cart';
+## Home Page "Create Account" Button
+- Hide "Create Account" button for logged-in users.
+- Show button only for guest users.
+
+## ProductDetail Related Products
+- Add section to display related products from the same category.
+- Fetch related products via API call.
+- Display them in a grid below the main product details.

@@ -33,7 +33,7 @@ const Checkout: React.FC = () => {
 
   // Calculate totals with correct Ethiopia VAT (15%)
   const subtotal = getTotal();
-  const shipping = subtotal > 100 ? 0 : 9.99; // Free shipping over $100
+  const shipping = subtotal > 5000 ? 0 : 50; // Free shipping over 5000 birr
   const taxRate = 0.15; // Ethiopia VAT rate (15%)
   const tax = subtotal * taxRate;
   const total = subtotal + shipping + tax;
@@ -290,7 +290,7 @@ const Checkout: React.FC = () => {
                           <h4 className="font-medium text-gray-900 dark:text-white">{item.name}</h4>
                           <p className="text-sm text-gray-600 dark:text-gray-300">Qty: {item.quantity}</p>
                         </div>
-                        <span className="font-medium text-gray-900 dark:text-white">{(item.price * item.quantity).toFixed(2)} Birr</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{(item.price * item.quantity).toFixed(2)} birr</span>
                       </div>
                     ))
                   )}
@@ -300,20 +300,20 @@ const Checkout: React.FC = () => {
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-300">Subtotal</span>
-                    <span className="font-medium text-gray-900 dark:text-white">${subtotal.toFixed(2)}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{subtotal.toFixed(2)} birr</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-300">Shipping</span>
-                    <span className="font-medium text-gray-900 dark:text-white">${shipping.toFixed(2)}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{shipping.toFixed(2)} birr</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-300">Tax (15% VAT)</span>
-                    <span className="font-medium text-gray-900 dark:text-white">${tax.toFixed(2)}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{tax.toFixed(2)} birr</span>
                   </div>
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
                     <div className="flex justify-between text-lg font-bold">
                       <span className="text-gray-900 dark:text-white">Total</span>
-                      <span className="text-gray-900 dark:text-white">${total.toFixed(2)}</span>
+                      <span className="text-gray-900 dark:text-white">{total.toFixed(2)} birr</span>
                     </div>
                   </div>
                 </div>
@@ -333,7 +333,7 @@ const Checkout: React.FC = () => {
                   ) : cartItems.length === 0 ? (
                     'Add items to cart to checkout'
                   ) : (
-                    `Pay with Chapa - ${total.toFixed(2)} Birr`
+                    `Pay with Chapa - ${total.toFixed(2)} birr`
                   )}
                 </button>
 

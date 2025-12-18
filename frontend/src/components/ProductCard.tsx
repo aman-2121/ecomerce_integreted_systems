@@ -97,19 +97,13 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
 
         <div className="flex justify-between items-center mb-4">
           <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-            {formatPrice(product.price)} Birr
+            {formatPrice(product.price)} birr
           </span>
           <div className="flex flex-col items-end gap-2">
-            {product.salesCount !== undefined && product.salesCount > 0 && (
-              <span className="px-3 py-1 rounded-full text-sm font-bold bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200">
-                {product.salesCount} sold
-              </span>
-            )}
-            <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
-              product.stock > 0
+            <span className={`px-4 py-2 rounded-full text-sm font-semibold ${product.stock > 0
                 ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
                 : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
-            }`}>
+              }`}>
               {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
             </span>
           </div>

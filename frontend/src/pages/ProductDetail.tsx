@@ -1,6 +1,6 @@
 // frontend/src/pages/ProductDetail.tsx
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { productAPI } from '../api/auth';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -14,11 +14,30 @@ const ProductDetail: React.FC = () => {
   const { addToCart } = useCart();
   const { user } = useAuth();
 
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+
   useEffect(() => {
-    productAPI.getById(id!).then(res => {
-      setProduct(res.data.product);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    const fetchProductAndRelated = async () => {
+      try {
+        setLoading(true);
+        const res = await productAPI.getById(id!);
+        const prod = res.data.product;
+        setProduct(prod);
+
+        if (prod.category) {
+          const allRes = await productAPI.getAll();
+          const related = (allRes.data.products || []).filter(
+            (p: any) => p.category === prod.category && p.id !== prod.id
+          ).slice(0, 4);
+          setRelatedProducts(related);
+        }
+      } catch (err) {
+        console.error('Error fetching product:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProductAndRelated();
   }, [id]);
 
   if (loading) return <div className="text-center py-20 text-2xl text-gray-900 dark:text-white">Loading...</div>;
@@ -79,7 +98,7 @@ const ProductDetail: React.FC = () => {
 
         <div className="space-y-8">
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white">{product.name}</h1>
-          <p className="text-4xl font-bold text-blue-600 dark:text-blue-400">${formatPrice(product.price)}</p>
+          <p className="text-4xl font-bold text-blue-600 dark:text-blue-400">{formatPrice(product.price)} birr</p>
           <p className="text-xl text-gray-700 dark:text-gray-300 leading-relaxed">{product.description || 'No description available.'}</p>
 
           <div className="flex items-center gap-6">
@@ -129,11 +148,10 @@ const ProductDetail: React.FC = () => {
               <button
                 onClick={handleAddToCart}
                 disabled={addedToCart}
-                className={`w-full text-2xl font-bold py-6 rounded-2xl transition transform hover:scale-105 shadow-2xl ${
-                  addedToCart
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
-                }`}
+                className={`w-full text-2xl font-bold py-6 rounded-2xl transition transform hover:scale-105 shadow-2xl ${addedToCart
+                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                  }`}
               >
                 {addedToCart ? '✓ Added to Cart!' : 'Add to Cart'}
               </button>
@@ -150,7 +168,37 @@ const ProductDetail: React.FC = () => {
           )}
         </div>
       </div>
-     </div>
+
+      {/* Related Products Section */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-24 space-y-12">
+          <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-8">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-white">Related Products</h2>
+            <Link to="/products" className="text-blue-600 dark:text-blue-400 font-bold text-xl hover:underline">
+              View All Products →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {relatedProducts.map((p) => (
+              <div key={p.id} className="group">
+                <Link to={`/products/${p.id}`} onClick={() => window.scrollTo(0, 0)}>
+                  <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 mb-4 h-64">
+                    <img
+                      src={p.image || 'https://via.placeholder.com/300x300.png?text=No+Image'}
+                      alt={p.name}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white line-clamp-1">{p.name}</h3>
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1">{formatPrice(p.price)} birr</p>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

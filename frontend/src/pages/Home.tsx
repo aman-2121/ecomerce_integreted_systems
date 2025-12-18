@@ -2,11 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { productAPI } from '../api/auth';
+import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ProductCard';
 
 const Home: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -32,33 +35,35 @@ const Home: React.FC = () => {
             <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gray-900 dark:text-white">
               Welcome to <span className="text-blue-600 dark:text-blue-400">ShopWave</span>
             </h1>
-            
+
             <p className="text-xl md:text-2xl mb-10 text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
-              Discover amazing products at great prices.
+              {user ? `Hello ${user.name.split(' ')[0]}, discover our latest collections.` : 'Discover amazing products at great prices.'}
             </p>
-            
+
             <div className="mb-10">
               <p className="text-blue-600 dark:text-blue-400 font-semibold text-lg md:text-xl">
                 Free shipping - Easy returns - 5-star service
               </p>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row justify-center gap-6 mb-16">
               <Link
                 to="/products"
                 className="bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold px-12 py-5 rounded-full transition-all duration-300"
               >
-                Shop Now
+                {user ? 'Continue Shopping' : 'Shop Now'}
               </Link>
-              
-              <Link
-                to="/register"
-                className="border-2 border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xl font-bold px-12 py-5 rounded-full transition-all duration-300"
-              >
-                Create Account
-              </Link>
+
+              {!user && (
+                <Link
+                  to="/register"
+                  className="border-2 border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xl font-bold px-12 py-5 rounded-full transition-all duration-300"
+                >
+                  Create Account
+                </Link>
+              )}
             </div>
-            
+
             {/* Featured Products Section Heading */}
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-8">
               Featured Products

@@ -21,6 +21,11 @@ const ChangePassword: React.FC = () => {
     });
   };
 
+  const validatePassword = (password: string): boolean => {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return regex.test(password);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -32,8 +37,8 @@ const ChangePassword: React.FC = () => {
       return;
     }
 
-    if (formData.newPassword.length < 6) {
-      setMessage('New password must be at least 6 characters long');
+    if (!validatePassword(formData.newPassword)) {
+      setMessage('Password must be at least 8 characters long and include uppercase, lowercase, number, and special character');
       setLoading(false);
       return;
     }
@@ -80,11 +85,10 @@ const ChangePassword: React.FC = () => {
       <div className="card">
         <div className="card-body">
           {message && (
-            <div className={`p-4 rounded-lg mb-6 ${
-              message.includes('success')
-                ? 'bg-green-50 border border-green-200 text-green-600'
-                : 'bg-red-50 border border-red-200 text-red-600'
-            }`}>
+            <div className={`p-4 rounded-lg mb-6 ${message.includes('success')
+              ? 'bg-green-50 border border-green-200 text-green-600'
+              : 'bg-red-50 border border-red-200 text-red-600'
+              }`}>
               {message}
             </div>
           )}
@@ -117,9 +121,9 @@ const ChangePassword: React.FC = () => {
                 onChange={handleChange}
                 className="input-field"
                 required
-                minLength={6}
+                minLength={8}
               />
-              <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters long</p>
+              <p className="text-xs text-gray-500 mt-1">Password must be at least 8 characters long and include uppercase, lowercase, number, and special character</p>
             </div>
 
             <div className="form-group">

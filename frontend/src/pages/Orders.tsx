@@ -163,7 +163,7 @@ const Orders: React.FC = () => {
                   <div className="flex items-center space-x-6 mt-4 lg:mt-0">
                     <div className="text-right">
                       <p className="text-2xl font-bold text-blue-600">
-                        {(Number(order.totalAmount) || 0).toFixed(2)} Birr
+                        {(Number(order.totalAmount) || 0).toFixed(2)} birr
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-300">Total Amount</p>
                     </div>
@@ -198,27 +198,24 @@ const Orders: React.FC = () => {
                     <div className={`flex-1 h-1 ${order.status !== 'pending' ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
 
                     <div className={`text-center ${['confirmed', 'shipped', 'delivered'].includes(order.status) ? 'text-blue-600 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
-                      <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${
-                        ['confirmed', 'shipped', 'delivered'].includes(order.status) ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                      }`}></div>
+                      <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${['confirmed', 'shipped', 'delivered'].includes(order.status) ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                        }`}></div>
                       <span>Confirmed</span>
                     </div>
 
                     <div className={`flex-1 h-1 ${['shipped', 'delivered'].includes(order.status) ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
 
                     <div className={`text-center ${['shipped', 'delivered'].includes(order.status) ? 'text-blue-600 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
-                      <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${
-                        ['shipped', 'delivered'].includes(order.status) ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                      }`}></div>
+                      <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${['shipped', 'delivered'].includes(order.status) ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                        }`}></div>
                       <span>Shipped</span>
                     </div>
 
                     <div className={`flex-1 h-1 ${order.status === 'delivered' ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
 
                     <div className={`text-center ${order.status === 'delivered' ? 'text-blue-600 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
-                      <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${
-                        order.status === 'delivered' ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                      }`}></div>
+                      <div className={`w-3 h-3 rounded-full mx-auto mb-1 ${order.status === 'delivered' ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                        }`}></div>
                       <span>Delivered</span>
                     </div>
                   </div>

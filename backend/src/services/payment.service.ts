@@ -55,7 +55,7 @@ export class PaymentService {
         email: paymentData.email,
         first_name: paymentData.first_name || 'Customer',
         last_name: paymentData.last_name || '',
-        phone_number: paymentData.phone_number ? paymentData.phone_number.replace(/\s+/g, '').replace(/^\+251/, '') : '',
+        phone_number: paymentData.phone_number ? paymentData.phone_number.replace(/\s+/g, '') : '',
         tx_ref,
         callback_url: `${process.env.FRONTEND_URL}/api/payments/callback`,
         return_url: `${process.env.FRONTEND_URL}/payment/success?tx_ref=${tx_ref}`,

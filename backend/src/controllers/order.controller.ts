@@ -75,12 +75,25 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
     // Create order
     let order;
     try {
+      // Get user details for customer info
+      let customerName = null;
+      let customerEmail = null;
+      if (userId) {
+        const user = await User.findByPk(userId);
+        if (user) {
+          customerName = user.name;
+          customerEmail = user.email;
+        }
+      }
+
       order = await Order.create({
         userId,
         totalAmount,
         shippingAddress,
         status: 'pending',
-        paymentStatus: 'pending'
+        paymentStatus: 'pending',
+        customerName,
+        customerEmail
       });
       console.log('Order created successfully:', order.id);
     } catch (createError: any) {
@@ -225,7 +238,17 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
       include: [
         {
           model: User,
-          attributes: ['id', 'name', 'email']
+          attributes: ['id', 'name', 'email'],
+          required: false
+        },
+        {
+          model: OrderItem,
+          include: [
+            {
+              model: Product,
+              attributes: ['id', 'name', 'image']
+            }
+          ]
         }
       ],
       order: [['createdAt', 'DESC']]

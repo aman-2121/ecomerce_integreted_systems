@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { verifyPayment } from '../api/payment';
+import { useCart } from '../context/CartContext';
 
 const PaymentSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const { clearCart } = useCart();
   const orderId = searchParams.get('orderId');
   const tx_ref = searchParams.get('tx_ref');
   const [loading, setLoading] = useState(true);
@@ -19,6 +21,7 @@ const PaymentSuccess: React.FC = () => {
 
           if (response.success) {
             setVerificationStatus('success');
+            clearCart();
           } else {
             setVerificationStatus('failed');
           }
@@ -117,7 +120,7 @@ const PaymentSuccess: React.FC = () => {
       {/* Order Timeline */}
       <div className="mt-12 text-left">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">What's Next?</h2>
-        
+
         <div className="space-y-4">
           <div className="flex items-start space-x-4">
             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">

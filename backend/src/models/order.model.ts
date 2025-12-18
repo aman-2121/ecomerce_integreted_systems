@@ -9,6 +9,8 @@ interface OrderAttributes {
   shippingAddress: string;
   paymentStatus: 'pending' | 'paid' | 'failed';
   paymentTxRef?: string;
+  customerName?: string;
+  customerEmail?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -60,6 +62,14 @@ Order.init(
       defaultValue: 'pending',
     },
     paymentTxRef: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    customerName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    customerEmail: {
       type: DataTypes.STRING,
       allowNull: true,
     },

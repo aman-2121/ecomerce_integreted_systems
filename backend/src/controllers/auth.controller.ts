@@ -1,4 +1,4 @@
- import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 import { User } from '../models';
@@ -150,8 +150,8 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
     if (!user) {
       // Create new user
       user = await User.create({
-        name,
-        email,
+        name: name || '',
+        email: email || '',
         password: '', // No password for Google users
         phone: '',
         address: '',
@@ -310,6 +310,40 @@ export const googleCallback = async (req: Request, res: Response): Promise<void>
     res.redirect(`http://localhost:5173/login?token=${jwtToken}`);
   } catch (error) {
     console.error('Google callback error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const changePassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user?.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ error: 'Current and new passwords are required' });
+      return;
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Check current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      res.status(401).json({ error: 'Invalid current password' });
+      return;
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    await user.update({ password: hashedPassword });
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

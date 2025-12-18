@@ -41,6 +41,9 @@ export const authAPI = {
 
   updateProfile: (profileData: { name: string; phone: string; address: string }) =>
     api.put('/auth/profile', profileData),
+
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.put('/auth/change-password', data),
 };
 
 export const productAPI = {
@@ -57,7 +60,7 @@ export const adminAPI = {
   createProduct: (data: any) => api.post('/admin/products', data),
   updateProduct: (id: string, data: any) => api.put(`/admin/products/${id}`, data),
   deleteProduct: (id: string) => api.delete(`/admin/products/${id}`),
-  getAllOrders: () => api.get('/orders'),
+  getAllOrders: () => api.get('/admin/orders'),
   updateOrderStatus: (id: string, status: string) => api.put(`/orders/${id}/status`, { status }),
   getAllUsers: () => api.get('/admin/users'),
   deleteUser: (id: string) => api.delete(`/admin/users/${id}`),

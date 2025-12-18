@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
 
@@ -8,9 +8,15 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  const { login, googleLogin } = useAuth();
+
+  const { login, googleLogin, user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +51,7 @@ const Login: React.FC = () => {
         <div className="card-header">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center">Sign In</h1>
         </div>
-        
+
         <div className="card-body">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6">
@@ -129,7 +135,7 @@ const Login: React.FC = () => {
                           navigate('/');
                         }
                       }
-                    }).catch((err) => {
+                    }).catch(() => {
                       setError('Google login failed');
                     });
                   }

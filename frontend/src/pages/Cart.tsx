@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
@@ -16,6 +16,7 @@ interface CartItem {
 const Cart: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const { items, isLoading, removeFromCart, updateQuantity, clearCart } = useCart();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
   const totalPrice = items.reduce((total: number, item: CartItem) => total + item.price * item.quantity, 0);
@@ -130,7 +131,7 @@ const Cart: React.FC = () => {
                     />
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold">{item.name}</h3>
-                      <p className="text-gray-600 dark:text-gray-300">{item.price.toFixed(2)} Birr</p>
+                      <p className="text-gray-600 dark:text-gray-300">{item.price.toFixed(2)} birr</p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
@@ -148,7 +149,7 @@ const Cart: React.FC = () => {
                       </button>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="text-lg font-semibold">{(item.price * item.quantity).toFixed(2)} birr</p>
                       <button
                         onClick={() => removeFromCart(item.id)}
                         className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-sm mt-1"
@@ -169,7 +170,7 @@ const Cart: React.FC = () => {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between">
                   <span>Subtotal ({items.length} items)</span>
-                  <span>{totalPrice.toFixed(2)} Birr</span>
+                  <span>{totalPrice.toFixed(2)} birr</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
@@ -178,7 +179,7 @@ const Cart: React.FC = () => {
                 <hr className="my-2" />
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total</span>
-                  <span>{totalPrice.toFixed(2)} Birr</span>
+                  <span>{totalPrice.toFixed(2)} birr</span>
                 </div>
               </div>
               <button

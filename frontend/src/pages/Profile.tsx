@@ -99,14 +99,13 @@ const Profile: React.FC = () => {
             <div className="card-header">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Personal Information</h2>
             </div>
-            
+
             <div className="card-body">
               {message && (
-                <div className={`p-4 rounded-lg mb-6 ${
-                  message.includes('success') 
-                    ? 'bg-green-50 border border-green-200 text-green-600' 
+                <div className={`p-4 rounded-lg mb-6 ${message.includes('success')
+                    ? 'bg-green-50 border border-green-200 text-green-600'
                     : 'bg-red-50 border border-red-200 text-red-600'
-                }`}>
+                  }`}>
                   {message}
                 </div>
               )}
@@ -208,7 +207,7 @@ const Profile: React.FC = () => {
             <div className="card-header">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Account Summary</h2>
             </div>
-            
+
             <div className="card-body space-y-4">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
@@ -239,11 +238,11 @@ const Profile: React.FC = () => {
             <div className="card-header">
               <h2 className="text-xl font-semibold text-gray-900">Quick Actions</h2>
             </div>
-            
+
             <div className="card-body space-y-3">
               <button
-                onClick={() => navigate('/orders')}
-                className="w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                onClick={() => navigate(user.role === 'admin' ? '/admin?tab=orders' : '/orders')}
+                className="w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors border border-transparent hover:border-blue-100 dark:hover:border-blue-900/30"
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
@@ -251,7 +250,9 @@ const Profile: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
                   </div>
-                  <span className="font-medium text-gray-900 dark:text-white">Order History</span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {user.role === 'admin' ? 'Manage User Orders' : 'Order History'}
+                  </span>
                 </div>
               </button>
 

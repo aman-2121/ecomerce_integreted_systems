@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { User, Order, Product, Category, UserActivityLog, SystemSettings, Banner, StaticPage, EmailTemplate } from '../models';
+import { User, Order, Product, Category, UserActivityLog, SystemSettings, Banner, StaticPage, EmailTemplate, OrderItem, Payment } from '../models';
 import { Op, QueryTypes } from 'sequelize';
 import sequelize from '../config/database';
 
@@ -119,10 +119,19 @@ export const getAllCategories = async (req: Request, res: Response): Promise<voi
 
 export const createCategory = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, description, image } = req.body;
+    const normalizedName = name.trim()
+      .split(' ')
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+
+    const existingCategory = await Category.findOne({ where: { name: normalizedName } });
+    if (existingCategory) {
+      res.status(400).json({ error: `Category "${normalizedName}" already exists` });
+      return;
+    }
 
     const category = await Category.create({
-      name,
+      name: normalizedName,
       description,
       image
     });
@@ -141,16 +150,25 @@ export const createCategory = async (req: Request, res: Response): Promise<void>
 export const updateCategory = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, description, image } = req.body;
+    const normalizedName = name.trim()
+      .split(' ')
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
 
-    const category = await Category.findByPk(id);
-    if (!category) {
-      res.status(404).json({ error: 'Category not found' });
+    const existingCategory = await Category.findOne({
+      where: {
+        name: normalizedName,
+        id: { [Op.ne]: id }
+      }
+    });
+
+    if (existingCategory) {
+      res.status(400).json({ error: `Category "${normalizedName}" already exists` });
       return;
     }
 
     await category.update({
-      name,
+      name: normalizedName,
       description,
       image
     });
@@ -716,9 +734,13 @@ export const updateSystemSettings = async (req: Request, res: Response): Promise
 // Bulk operations
 export const bulkUpdateOrderStatus = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { orderIds, status } = req.body;
+    const { orderIds, ids, status } = req.body;
+    const finalIds = orderIds || ids;
 
-    if (!Array.isArray(orderIds) || orderIds.length === 0) {
+    console.log('=== ADMIN BULK STATUS UPDATE START ===');
+    console.log('Payload:', JSON.stringify(req.body, null, 2));
+
+    if (!Array.isArray(finalIds) || finalIds.length === 0) {
       res.status(400).json({ error: 'Order IDs array is required' });
       return;
     }
@@ -732,12 +754,15 @@ export const bulkUpdateOrderStatus = async (req: Request, res: Response): Promis
     const [affectedRows] = await Order.update(
       { status },
       {
-        where: { id: { [Op.in]: orderIds } }
+        where: { id: { [Op.in]: finalIds } }
       }
     );
 
+    console.log(`Bulk update success: ${affectedRows} orders set to ${status}`);
+    console.log('=== ADMIN BULK STATUS UPDATE END ===');
+
     res.json({
-      message: `${affectedRows} orders updated successfully`,
+      message: `${affectedRows} orders updated successfully to ${status}`,
       affectedRows
     });
   } catch (error) {
@@ -827,14 +852,29 @@ export const updateProductStock = async (req: Request, res: Response): Promise<v
 // Get all orders for admin
 export const getAllOrders = async (req: Request, res: Response): Promise<void> => {
   try {
-    // First, check and update all pending payments
-    await checkAndUpdateAllPendingPayments();
+    // Check pending payments in the background
+    checkAndUpdateAllPendingPayments();
 
+    console.log('Fetching all orders for admin...');
     const orders = await Order.findAll({
-      include: [{
-        model: User,
-        attributes: ['name', 'email']
-      }],
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'name', 'email'],
+          required: false
+        },
+        {
+          model: OrderItem,
+          as: 'items',
+          include: [
+            {
+              model: Product,
+              as: 'product',
+              attributes: ['id', 'name', 'image']
+            }
+          ]
+        }
+      ],
       order: [['createdAt', 'DESC']]
     });
 

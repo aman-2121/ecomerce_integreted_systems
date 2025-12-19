@@ -10,7 +10,7 @@ interface CategoryAttributes {
   updatedAt?: Date;
 }
 
-interface CategoryCreationAttributes extends Optional<CategoryAttributes, 'id' | 'description' | 'image' | 'createdAt' | 'updatedAt'> {}
+interface CategoryCreationAttributes extends Optional<CategoryAttributes, 'id' | 'description' | 'image' | 'createdAt' | 'updatedAt'> { }
 
 class Category extends Model<CategoryAttributes, CategoryCreationAttributes> implements CategoryAttributes {
   public id!: number;
@@ -46,6 +46,17 @@ Category.init(
     sequelize,
     tableName: 'categories',
     timestamps: true,
+    hooks: {
+      beforeValidate: (category: Category) => {
+        if (category.name) {
+          // Trim and Title Case
+          category.name = category.name.trim()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+        }
+      },
+    }
   }
 );
 

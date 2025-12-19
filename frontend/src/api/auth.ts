@@ -70,6 +70,7 @@ export const adminAPI = {
   deleteProduct: (id: string) => api.delete(`/admin/products/${id}`),
   getAllOrders: () => api.get('/admin/orders'),
   updateOrderStatus: (id: string, status: string) => api.put(`/orders/${id}/status`, { status }),
+  bulkUpdateOrderStatus: (ids: number[], status: string) => api.put('/admin/orders/bulk-status', { orderIds: ids, status }),
   getAllUsers: () => api.get('/admin/users'),
   deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
   // Category management

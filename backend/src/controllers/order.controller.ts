@@ -76,8 +76,8 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
     let order;
     try {
       // Get user details for customer info
-      let customerName = null;
-      let customerEmail = null;
+      let customerName: string | undefined = undefined;
+      let customerEmail: string | undefined = undefined;
       if (userId) {
         const user = await User.findByPk(userId);
         if (user) {
@@ -150,15 +150,22 @@ export const getUserOrders = async (req: Request, res: Response): Promise<void> 
   try {
     const userId = (req as any).user?.userId;
 
-    // First, check for any pending payments and try to update their status
-    await checkAndUpdatePendingPayments(userId);
+    // Check for any pending payments in the background
+    checkAndUpdatePendingPayments(userId);
 
     const orders = await Order.findAll({
       where: { userId },
       include: [
         {
-          model: User,
-          attributes: ['id', 'name', 'email']
+          model: OrderItem,
+          as: 'items',
+          include: [
+            {
+              model: Product,
+              as: 'product',
+              attributes: ['id', 'name', 'image']
+            }
+          ]
         }
       ],
       order: [['createdAt', 'DESC']]
@@ -185,9 +192,11 @@ export const getOrderById = async (req: Request, res: Response): Promise<void> =
         },
         {
           model: OrderItem,
+          as: 'items',
           include: [
             {
               model: Product,
+              as: 'product',
               attributes: ['id', 'name', 'image']
             }
           ]
@@ -229,10 +238,45 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
   }
 };
 
+export const bulkUpdateOrderStatus = async (req: Request, res: Response): Promise<void> => {
+  console.log('=== BULK STATUS UPDATE START ===');
+  console.log('Payload:', JSON.stringify(req.body, null, 2));
+  try {
+    const { ids, status } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      res.status(400).json({ error: 'Order IDs array is required' });
+      return;
+    }
+
+    if (!status) {
+      res.status(400).json({ error: 'Status is required' });
+      return;
+    }
+
+    await Order.update({ status }, {
+      where: {
+        id: ids
+      }
+    });
+
+    res.json({
+      message: `Successfully updated ${ids.length} orders to ${status}`,
+      updatedCount: ids.length
+    });
+
+    console.log(`Bulk update success: ${ids.length} orders set to ${status}`);
+    console.log('=== BULK STATUS UPDATE END ===');
+  } catch (error) {
+    console.error('Bulk update order error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const getAllOrders = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Check for any pending payments and try to update their status
-    await checkAndUpdateAllPendingPayments();
+    // Check for any pending payments in the background
+    checkAndUpdateAllPendingPayments();
 
     const orders = await Order.findAll({
       include: [
@@ -243,9 +287,11 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
         },
         {
           model: OrderItem,
+          as: 'items',
           include: [
             {
               model: Product,
+              as: 'product',
               attributes: ['id', 'name', 'image']
             }
           ]

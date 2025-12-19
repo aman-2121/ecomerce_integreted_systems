@@ -23,6 +23,7 @@ import {
   updateProductStock,
   updatePaymentStatus,
   getAllOrders,
+  bulkUpdateOrderStatus,
 } from '../controllers/admin.controller';
 import { authMiddleware } from '../middleware/auth';
 
@@ -79,5 +80,6 @@ router.patch('/orders/payment-status', updatePaymentStatus);
 
 // Order management
 router.get('/orders', getAllOrders);
+router.put('/orders/bulk-status', bulkUpdateOrderStatus);
 
 export default router;

@@ -27,10 +27,10 @@ UserActivityLog.belongsTo(User, { foreignKey: 'userId' });
 User.hasMany(UserPaymentMethod, { foreignKey: 'userId' });
 UserPaymentMethod.belongsTo(User, { foreignKey: 'userId' });
 
-Order.hasMany(OrderItem, { foreignKey: 'orderId' });
-OrderItem.belongsTo(Order, { foreignKey: 'orderId' });
+Order.hasMany(OrderItem, { foreignKey: 'orderId', as: 'items' });
+OrderItem.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 
-Product.hasMany(OrderItem, { foreignKey: 'productId' });
-OrderItem.belongsTo(Product, { foreignKey: 'productId' });
+Product.hasMany(OrderItem, { foreignKey: 'productId', as: 'orderItems' });
+OrderItem.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 
 export { User, Product, Order, Payment, Category, UserActivityLog, SystemSettings, Banner, StaticPage, EmailTemplate, UserPaymentMethod, OrderItem };

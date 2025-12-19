@@ -1,4 +1,4 @@
- // frontend/src/pages/Admin.tsx (Updated - removed navigation away from admin)
+// frontend/src/pages/Admin.tsx (Updated - removed navigation away from admin)
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -119,7 +119,7 @@ const Admin: React.FC = () => {
 
   const handleSelectAllOrders = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedOrders(orders.map(o => o.id));
+      setSelectedOrders(filteredOrders.map(o => o.id));
     } else {
       setSelectedOrders([]);
     }
@@ -135,14 +135,24 @@ const Admin: React.FC = () => {
     if (!bulkStatus || selectedOrders.length === 0) return;
 
     if (window.confirm(`Are you sure you want to update ${selectedOrders.length} orders to ${bulkStatus}?`)) {
+      setLoadingOrders(true);
       try {
-        await Promise.all(selectedOrders.map(id => adminAPI.updateOrderStatus(id.toString(), bulkStatus)));
-        await fetchOrders(); // Refresh orders after bulk update
+        const currentCount = selectedOrders.length;
+        const currentStatus = bulkStatus;
+        console.log('Bulk updating orders:', { ids: selectedOrders, status: bulkStatus });
+        setMessage(`Updating ${currentCount} orders to ${currentStatus}...`);
+
+        await adminAPI.bulkUpdateOrderStatus(selectedOrders, bulkStatus);
+
+        await fetchOrders();
+        setMessage(`Successfully updated ${currentCount} orders to ${currentStatus}`);
         setSelectedOrders([]);
         setBulkStatus('');
       } catch (err) {
         console.error('Bulk update failed:', err);
-        alert('Failed to update some orders');
+        setMessage('Error: Failed to update orders');
+      } finally {
+        setLoadingOrders(false);
       }
     }
   };
@@ -827,10 +837,11 @@ const Admin: React.FC = () => {
                         onChange={(e) => setBulkStatus(e.target.value)}
                       >
                         <option value="">Bulk Actions...</option>
-                        <option value="confirmed">Confirm</option>
-                        <option value="shipped">Mark Shipped</option>
-                        <option value="delivered">Mark Delivered</option>
-                        <option value="cancelled">Cancel</option>
+                        <option value="pending">pending</option>
+                        <option value="confirmed">confirmed</option>
+                        <option value="shipped">shipped</option>
+                        <option value="delivered">delivered</option>
+                        <option value="cancelled">cancelled</option>
                       </select>
                       <button
                         onClick={handleBulkStatusUpdate}
@@ -853,7 +864,7 @@ const Admin: React.FC = () => {
                               type="checkbox"
                               className="rounded text-blue-600 focus:ring-blue-500"
                               onChange={handleSelectAllOrders}
-                              checked={selectedOrders.length === orders.length && orders.length > 0}
+                              checked={filteredOrders.length > 0 && filteredOrders.every(o => selectedOrders.includes(o.id))}
                             />
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Order ID</th>
@@ -881,13 +892,39 @@ const Admin: React.FC = () => {
                               <div className="text-xs text-gray-500 dark:text-gray-400">{order.customerEmail || order.user?.email || 'N/A'}</div>
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                              <div className="max-w-xs truncate">
-                                {order.OrderItems?.map((item: any, idx: number) => (
-                                  <span key={item.id}>
-                                    {item.Product?.name || 'Unknown'} (x{item.quantity})
-                                    {idx < order.OrderItems.length - 1 ? ', ' : ''}
-                                  </span>
-                                )) || 'No items'}
+                              <div className="max-w-xs space-y-2">
+                                {(() => {
+                                  const items = order.items || order.OrderItems;
+                                  if (!items || items.length === 0) {
+                                    return <span className="text-gray-400 italic font-medium">No items found</span>;
+                                  }
+                                  return items.map((item: any) => {
+                                    const prod = item.product || item.Product;
+                                    return (
+                                      <div key={item.id} className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-700/50 p-1.5 rounded-lg border border-gray-100 dark:border-gray-600">
+                                        {prod?.image ? (
+                                          <img
+                                            src={prod.image}
+                                            alt={prod?.name}
+                                            className="w-10 h-10 object-cover rounded-md shadow-sm border border-white dark:border-gray-500 flex-shrink-0"
+                                          />
+                                        ) : (
+                                          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center flex-shrink-0">
+                                            <span className="text-[10px] text-gray-400 font-bold">IMAGE</span>
+                                          </div>
+                                        )}
+                                        <div className="flex flex-col min-w-0 pr-1">
+                                          <span className="font-semibold text-gray-900 dark:text-white truncate text-xs leading-tight">
+                                            {prod?.name || 'Unknown Product'}
+                                          </span>
+                                          <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                                            Qty: <span className="text-blue-600 dark:text-blue-400 font-bold">{item.quantity}</span>
+                                          </span>
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-bold">{safePrice(order.totalAmount)} birr</td>

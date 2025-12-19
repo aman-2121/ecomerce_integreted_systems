@@ -46,7 +46,8 @@ function App() {
           <Route path="/orders" element={isAdminUserPage ? renderWithAdminLayout(<Orders />) : <Orders />} />
           <Route path="/orders/:id" element={isAdminUserPage ? renderWithAdminLayout(<OrderDetail />) : <OrderDetail />} />
           <Route path="/admin" element={<Admin />} />
-          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+
           <Route path="/change-password" element={isAdminUserPage ? renderWithAdminLayout(<ChangePassword />) : <ChangePassword />} />
           <Route path="/payment-methods" element={<PaymentMethods />} />
         </Routes>

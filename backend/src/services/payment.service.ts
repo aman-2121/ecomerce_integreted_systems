@@ -58,7 +58,7 @@ export class PaymentService {
         phone_number: paymentData.phone_number ? paymentData.phone_number.replace(/\s+/g, '') : '',
         tx_ref,
         callback_url: `${process.env.FRONTEND_URL}/api/payments/callback`,
-        return_url: `${process.env.FRONTEND_URL}/payment/success?tx_ref=${tx_ref}`,
+        return_url: `${process.env.FRONTEND_URL}/payment/success?tx_ref=${tx_ref}&orderId=${orderId}`,
         webhook_url: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/payments/chapa-webhook`,
         customization: {
           title: 'E-Com Ethiopia',

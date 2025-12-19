@@ -438,7 +438,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
     // Check if payment is already completed
     if (payment.status === 'completed' && order.paymentStatus === 'paid') {
       console.log('Payment already completed and order marked as paid');
-      return res.json({ success: true, message: 'Payment already verified' });
+      return res.json({ success: true, message: 'Payment already verified', orderId: payment.orderId });
     }
 
     // Always try to verify with Chapa API first
@@ -460,7 +460,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
         await payment.update({ status: 'completed' });
         await order.update({ paymentStatus: 'paid' });
         console.log('Payment and order updated successfully');
-        return res.json({ success: true, message: 'Payment verified and order updated' });
+        return res.json({ success: true, message: 'Payment verified and order updated', orderId: payment.orderId });
       } else {
         console.log('Payment verification failed or pending');
         return res.json({ success: false, message: 'Payment not completed' });

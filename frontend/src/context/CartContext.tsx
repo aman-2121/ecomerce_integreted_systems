@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 
 interface CartItem {
@@ -142,7 +142,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     }
   }, [items, isInitialized, user]);
 
-  const addToCart = (newItem: Omit<CartItem, 'id'>) => {
+  const addToCart = useCallback((newItem: Omit<CartItem, 'id'>) => {
     console.log('CartContext: addToCart called with item:', newItem);
 
     setItems(currentItems => {
@@ -174,13 +174,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       console.log('CartContext: New cart items after add:', newItems);
       return newItems;
     });
-  };
+  }, []);
 
-  const removeFromCart = (id: string) => {
+  const removeFromCart = useCallback((id: string) => {
     setItems(currentItems => currentItems.filter(item => item.id !== id));
-  };
+  }, []);
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = useCallback((id: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(id);
       return;
@@ -191,11 +191,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         item.id === id ? { ...item, quantity } : item
       )
     );
-  };
+  }, [removeFromCart]);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setItems([]);
-  };
+  }, []);
 
   const getTotal = () => {
     return items.reduce((total, item) => total + (item.price * item.quantity), 0);

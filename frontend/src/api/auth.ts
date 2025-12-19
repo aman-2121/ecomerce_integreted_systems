@@ -34,8 +34,16 @@ export const authAPI = {
   googleLogin: (data: { token: string }) =>
     api.post('/auth/google', data),
 
-  register: (userData: { name: string; email: string; password: string }) =>
-    api.post('/auth/register', userData),
+  register: (userData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address: string;
+    password: string;
+    confirmPassword: string;
+    termsAccepted: boolean;
+  }) => api.post('/auth/register', userData),
 
   getProfile: () => api.get('/auth/profile'),
 

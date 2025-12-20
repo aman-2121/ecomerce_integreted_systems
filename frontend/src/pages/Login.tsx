@@ -76,14 +76,9 @@ const Login: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <div className="flex justify-between items-center mb-2">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <Link to="/forgot-password" title="Forgot Password" className="text-xs text-blue-600 hover:text-blue-700 font-medium">
-                  Forgot password?
-                </Link>
-              </div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
               <input
                 type="password"
                 id="password"
@@ -156,13 +151,18 @@ const Login: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-2">
             <p className="text-gray-600">
               Don't have an account?{' '}
               <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">
                 Sign up here
               </Link>
             </p>
+            <div className="pt-2">
+              <Link to="/forgot-password" title="Forgot Password" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                Forgot password?
+              </Link>
+            </div>
           </div>
         </div>
       </div>

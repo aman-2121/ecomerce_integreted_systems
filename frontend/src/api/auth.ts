@@ -45,6 +45,13 @@ export const authAPI = {
     termsAccepted: boolean;
   }) => api.post('/auth/register', userData),
 
+  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+
+  verifyCode: (email: string, code: string) => api.post('/auth/verify-code', { email, code }),
+
+  resetPassword: (data: { email: string; code: string; newPassword: string }) =>
+    api.post('/auth/reset-password', data),
+
   getProfile: () => api.get('/auth/profile'),
 
   updateProfile: (profileData: { name: string; phone: string; address: string }) =>
@@ -70,7 +77,7 @@ export const adminAPI = {
   deleteProduct: (id: string) => api.delete(`/admin/products/${id}`),
   getAllOrders: () => api.get('/admin/orders'),
   updateOrderStatus: (id: string, status: string) => api.put(`/orders/${id}/status`, { status }),
-  bulkUpdateOrderStatus: (ids: number[], status: string) => api.put('/admin/orders/bulk-status', { orderIds: ids, status }),
+  bulkUpdateOrderStatus: (ids: number[], status: string) => api.put('/admin/orders/bulk-status', { ids, status }),
   getAllUsers: () => api.get('/admin/users'),
   deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
   // Category management

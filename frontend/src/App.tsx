@@ -17,6 +17,9 @@ import OrderDetail from './pages/OrderDetail';
 import Admin from './pages/Admin';
 import PaymentSuccess from './pages/PaymentSuccess';
 import ChangePassword from './pages/ChangePassword';
+import ForgotPassword from './pages/ForgotPassword';
+import VerifyCode from './pages/VerifyCode';
+import ResetPassword from './pages/ResetPassword';
 import PaymentMethods from './pages/PaymentMethods';
 
 function App() {
@@ -42,6 +45,9 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-code" element={<VerifyCode />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/profile" element={isAdminUserPage ? renderWithAdminLayout(<Profile />) : <Profile />} />
           <Route path="/orders" element={isAdminUserPage ? renderWithAdminLayout(<Orders />) : <Orders />} />
           <Route path="/orders/:id" element={isAdminUserPage ? renderWithAdminLayout(<OrderDetail />) : <OrderDetail />} />

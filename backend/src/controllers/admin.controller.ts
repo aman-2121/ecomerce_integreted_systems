@@ -119,6 +119,13 @@ export const getAllCategories = async (req: Request, res: Response): Promise<voi
 
 export const createCategory = async (req: Request, res: Response): Promise<void> => {
   try {
+    const { name, description, image } = req.body;
+
+    if (!name) {
+      res.status(400).json({ error: 'Category name is required' });
+      return;
+    }
+
     const normalizedName = name.trim()
       .split(' ')
       .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -150,21 +157,32 @@ export const createCategory = async (req: Request, res: Response): Promise<void>
 export const updateCategory = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const normalizedName = name.trim()
-      .split(' ')
-      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
+    const { name, description, image } = req.body;
 
-    const existingCategory = await Category.findOne({
-      where: {
-        name: normalizedName,
-        id: { [Op.ne]: id }
-      }
-    });
-
-    if (existingCategory) {
-      res.status(400).json({ error: `Category "${normalizedName}" already exists` });
+    const category = await Category.findByPk(id);
+    if (!category) {
+      res.status(404).json({ error: 'Category not found' });
       return;
+    }
+
+    let normalizedName = category.name;
+    if (name) {
+      normalizedName = name.trim()
+        .split(' ')
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+
+      const existingCategory = await Category.findOne({
+        where: {
+          name: normalizedName,
+          id: { [Op.ne]: id }
+        }
+      });
+
+      if (existingCategory) {
+        res.status(400).json({ error: `Category "${normalizedName}" already exists` });
+        return;
+      }
     }
 
     await category.update({
@@ -735,13 +753,21 @@ export const updateSystemSettings = async (req: Request, res: Response): Promise
 export const bulkUpdateOrderStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const { orderIds, ids, status } = req.body;
-    const finalIds = orderIds || ids;
+    const targetIds = orderIds || ids;
 
     console.log('=== ADMIN BULK STATUS UPDATE START ===');
     console.log('Payload:', JSON.stringify(req.body, null, 2));
+    console.log('Target IDs:', targetIds);
+    console.log('Status:', status);
 
-    if (!Array.isArray(finalIds) || finalIds.length === 0) {
+    if (!targetIds || !Array.isArray(targetIds) || targetIds.length === 0) {
+      console.warn('Bulk update failed: No IDs provided');
       res.status(400).json({ error: 'Order IDs array is required' });
+      return;
+    }
+
+    if (!status) {
+      res.status(400).json({ error: 'Status is required' });
       return;
     }
 
@@ -751,20 +777,20 @@ export const bulkUpdateOrderStatus = async (req: Request, res: Response): Promis
       return;
     }
 
-    const [affectedRows] = await Order.update(
-      { status },
-      {
-        where: { id: { [Op.in]: finalIds } }
+    const [affectedRows] = await Order.update({ status }, {
+      where: {
+        id: { [Op.in]: targetIds }
       }
-    );
+    });
+
+    res.json({
+      message: `Successfully updated ${affectedRows} orders to ${status}`,
+      updatedCount: affectedRows
+    });
 
     console.log(`Bulk update success: ${affectedRows} orders set to ${status}`);
     console.log('=== ADMIN BULK STATUS UPDATE END ===');
 
-    res.json({
-      message: `${affectedRows} orders updated successfully to ${status}`,
-      affectedRows
-    });
   } catch (error) {
     console.error('Bulk update order status error:', error);
     res.status(500).json({ error: 'Internal server error' });

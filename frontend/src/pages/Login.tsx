@@ -76,9 +76,14 @@ const Login: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <Link to="/forgot-password" title="Forgot Password" className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 type="password"
                 id="password"

@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
+import dns from 'dns';
+import crypto from 'crypto';
+import nodemailer from 'nodemailer';
 import { User } from '../models';
 import { generateToken } from '../utils/jwt';
 
@@ -10,6 +13,25 @@ const googleClient = new OAuth2Client(
   process.env.GOOGLE_REDIRECT_URI!
 );
 
+// Function to validate email by checking MX records
+const validateEmailDomain = (email: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const domain = email.split('@')[1];
+    if (!domain) {
+      resolve(false);
+      return;
+    }
+
+    dns.resolveMx(domain, (err, addresses) => {
+      if (err || !addresses || addresses.length === 0) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
+    });
+  });
+};
+
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { firstName, lastName, email, phone, address, password, confirmPassword, termsAccepted } = req.body;
@@ -17,6 +39,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Validate required fields
     if (!firstName || !lastName || !email || !phone || !address || !password || !confirmPassword) {
       res.status(400).json({ error: 'All fields are required' });
+      return;
+    }
+
+    // Check if email domain is valid (MX record check)
+    const isValidDomain = await validateEmailDomain(email);
+    if (!isValidDomain) {
+      res.status(400).json({ error: 'The email domain is invalid or cannot receive emails. Please use a real email address.' });
       return;
     }
 
@@ -344,6 +373,143 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
     console.error('Change password error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({ error: 'Email is required' });
+      return;
+    }
+
+    // Validate email domain (check MX records) - ensuring it's "real"
+    const isValidDomain = await validateEmailDomain(email);
+    if (!isValidDomain) {
+      res.status(400).json({ error: 'Please provide a valid email address with a real domain' });
+      return;
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      // Don't reveal if email exists or not for security
+      res.json({ message: 'If the email is registered, a 4-digit reset code has been sent' });
+      return;
+    }
+
+    // Generate 4-digit reset code
+    const resetCode = Math.floor(1000 + Math.random() * 9000).toString();
+    const resetCodeExpiry = new Date(Date.now() + 600000); // 10 minutes
+
+    // Store reset code in DB
+    await user.update({
+      resetCode,
+      resetCodeExpires: resetCodeExpiry
+    });
+
+    // Create email transporter
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Password Reset Code',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+          <h2 style="color: #4f46e5; text-align: center;">Password Reset</h2>
+          <p>You requested a password reset for your account.</p>
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+            <p style="font-size: 14px; color: #6b7280; margin-bottom: 10px;">Your 4-digit reset code is:</p>
+            <h1 style="font-size: 48px; letter-spacing: 12px; color: #111827; margin: 0;">${resetCode}</h1>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">This code will expire in <strong>10 minutes</strong>.</p>
+          <p style="color: #6b7280; font-size: 14px;">If you didn't request this, please ignore this email.</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #9ca3af; text-align: center;">© ${new Date().getFullYear()} E-commerce System</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.json({ message: 'If the email is registered, a 4-digit reset code has been sent' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const verifyResetCode = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      res.status(400).json({ error: 'Email and code are required' });
+      return;
+    }
+
+    const user = await User.findOne({ where: { email } });
+
+    if (!user || user.resetCode !== code || !user.resetCodeExpires || user.resetCodeExpires < new Date()) {
+      res.status(400).json({ error: 'Invalid or expired reset code' });
+      return;
+    }
+
+    // Generate a temporary verification token (simple short-lived JWT or random string)
+    // For simplicity, we'll just tell the frontend it's verified.
+    res.json({ message: 'Code verified successfully', success: true });
+  } catch (error) {
+    console.error('Verify reset code error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+      res.status(400).json({ error: 'Email, code and new password are required' });
+      return;
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user || user.resetCode !== code || !user.resetCodeExpires || user.resetCodeExpires < new Date()) {
+      res.status(400).json({ error: 'Invalid or expired reset session' });
+      return;
+    }
+
+    // Validate password strength
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      res.status(400).json({
+        error: 'Password must be at least 8 characters long and include uppercase, lowercase, number, and special character'
+      });
+      return;
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // Update password and clear reset fields
+    await user.update({
+      password: hashedPassword,
+      resetCode: null as any,
+      resetCodeExpires: null as any
+    });
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

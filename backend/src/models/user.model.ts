@@ -10,11 +10,13 @@ interface UserAttributes {
   address?: string;
   role: 'customer' | 'admin';
   googleId?: string;
+  resetCode?: string;
+  resetCodeExpires?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'role' | 'createdAt' | 'updatedAt'> {}
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'role' | 'createdAt' | 'updatedAt'> { }
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: number;
@@ -25,6 +27,8 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public address?: string;
   public role!: 'customer' | 'admin';
   public googleId?: string;
+  public resetCode?: string;
+  public resetCodeExpires?: Date;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -63,6 +67,14 @@ User.init(
     role: {
       type: DataTypes.ENUM('customer', 'admin'),
       defaultValue: 'customer',
+    },
+    resetCode: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    resetCodeExpires: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {

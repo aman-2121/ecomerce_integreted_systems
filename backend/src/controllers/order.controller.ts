@@ -217,21 +217,35 @@ export const getOrderById = async (req: Request, res: Response): Promise<void> =
 };
 
 export const updateOrderStatus = async (req: Request, res: Response): Promise<void> => {
+  console.log('=== SINGLE STATUS UPDATE START ===');
+  console.log('Order ID:', req.params.id);
+  console.log('New status:', req.body.status);
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    const order = await Order.findByPk(id);
-    if (!order) {
+    if (!status) {
+      res.status(400).json({ error: 'Status is required' });
+      return;
+    }
+
+    // Use the same bulk update logic for consistency
+    const [affectedRows] = await Order.update({ status }, {
+      where: { id }
+    });
+
+    if (affectedRows === 0) {
       res.status(404).json({ error: 'Order not found' });
       return;
     }
 
-    await order.update({ status });
     res.json({
       message: 'Order status updated successfully',
-      order
+      updatedCount: affectedRows
     });
+
+    console.log(`Single update success: Order ${id} set to ${status}`);
+    console.log('=== SINGLE STATUS UPDATE END ===');
   } catch (error) {
     console.error('Update order error:', error);
     res.status(500).json({ error: 'Internal server error' });

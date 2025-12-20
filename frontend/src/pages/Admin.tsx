@@ -66,6 +66,7 @@ const Admin: React.FC = () => {
   const [topProductsLoading, setTopProductsLoading] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [searchOrders, setSearchOrders] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('');
   const [searchUsers, setSearchUsers] = useState('');
   const [searchLowStock, setSearchLowStock] = useState('');
   const [searchTopProducts, setSearchTopProducts] = useState('');
@@ -73,6 +74,7 @@ const Admin: React.FC = () => {
   const [searchCategories, setSearchCategories] = useState('');
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
   const [bulkStatus, setBulkStatus] = useState('');
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   // Low stock state
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
@@ -134,36 +136,61 @@ const Admin: React.FC = () => {
   const handleBulkStatusUpdate = async () => {
     if (!bulkStatus || selectedOrders.length === 0) return;
 
+    console.log('[DEBUG] handleBulkStatusUpdate START', { selectedOrders, bulkStatus });
+
     if (window.confirm(`Are you sure you want to update ${selectedOrders.length} orders to ${bulkStatus}?`)) {
-      setLoadingOrders(true);
+      setBulkUpdating(true);
+
+      // Safety timeout - if update takes too long, stop loading state
+      const timeoutId = setTimeout(() => {
+        if (loadingOrders) {
+          setLoadingOrders(false);
+          setMessage('Error: Bulk update is taking longer than expected. Please refresh.');
+        }
+      }, 15000); // 15 seconds timeout
+
       try {
         const currentCount = selectedOrders.length;
         const currentStatus = bulkStatus;
-        console.log('Bulk updating orders:', { ids: selectedOrders, status: bulkStatus });
+        console.log('[DEBUG] Calling bulkUpdateOrderStatus API', { orderIds: selectedOrders, status: currentStatus });
         setMessage(`Updating ${currentCount} orders to ${currentStatus}...`);
 
-        await adminAPI.bulkUpdateOrderStatus(selectedOrders, bulkStatus);
+        const response = await adminAPI.bulkUpdateOrderStatus(selectedOrders, bulkStatus);
+        console.log('[DEBUG] bulkUpdateOrderStatus API SUCCESS', response.data);
 
+        clearTimeout(timeoutId);
         await fetchOrders();
+        console.log('[DEBUG] fetchOrders after bulk update SUCCESS');
         setMessage(`Successfully updated ${currentCount} orders to ${currentStatus}`);
         setSelectedOrders([]);
         setBulkStatus('');
-      } catch (err) {
-        console.error('Bulk update failed:', err);
-        setMessage('Error: Failed to update orders');
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        console.error('[DEBUG] bulkUpdateOrderStatus API FAILED', err);
+        const errorMsg = err.response?.data?.error || err.message || 'Error: Failed to update orders';
+        setMessage(errorMsg);
       } finally {
-        setLoadingOrders(false);
+        console.log('[DEBUG] handleBulkStatusUpdate FINISHED');
+        setBulkUpdating(false);
       }
+    } else {
+      console.log('[DEBUG] handleBulkStatusUpdate CANCELLED by user');
     }
   };
 
-  const filteredOrders = orders.filter(order =>
-    order.id.toString().includes(searchOrders) ||
-    (order.user?.name || '').toLowerCase().includes(searchOrders.toLowerCase()) ||
-    (order.user?.email || '').toLowerCase().includes(searchOrders.toLowerCase()) ||
-    (order.customerName || '').toLowerCase().includes(searchOrders.toLowerCase()) ||
-    (order.customerEmail || '').toLowerCase().includes(searchOrders.toLowerCase())
-  );
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch =
+      order.id.toString().includes(searchOrders) ||
+      (order.user?.name || '').toLowerCase().includes(searchOrders.toLowerCase()) ||
+      (order.user?.email || '').toLowerCase().includes(searchOrders.toLowerCase()) ||
+      (order.customerName || '').toLowerCase().includes(searchOrders.toLowerCase()) ||
+      (order.customerEmail || '').toLowerCase().includes(searchOrders.toLowerCase());
+
+    const matchesStatus = orderStatusFilter === '' ||
+      (order.status || '').toLowerCase() === orderStatusFilter.toLowerCase();
+
+    return matchesSearch && matchesStatus;
+  });
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchUsers.toLowerCase()) ||
@@ -337,8 +364,16 @@ const Admin: React.FC = () => {
   };
 
   const updateOrderStatus = async (id: number, status: string) => {
-    await adminAPI.updateOrderStatus(id.toString(), status);
-    loadAllData();
+    console.log('[DEBUG] updateOrderStatus (Single) START', { id, status });
+    try {
+      const response = await adminAPI.updateOrderStatus(id.toString(), status);
+      console.log('[DEBUG] updateOrderStatus (Single) SUCCESS', response.data);
+      setMessage(`Order #${id} status updated to ${status}`);
+      loadAllData();
+    } catch (err: any) {
+      console.error('[DEBUG] updateOrderStatus (Single) FAILED', err);
+      setMessage(err.response?.data?.error || 'Failed to update order status');
+    }
   };
 
   if (!user || user.role !== 'admin') {
@@ -445,9 +480,26 @@ const Admin: React.FC = () => {
 
           {/* Content */}
           <div className="flex-1 p-6">
+            {/* Floating Notification System */}
             {message && (
-              <div className={`p-4 rounded-lg mb-6 text-center text-lg font-medium ${message.includes('Error') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                {message}
+              <div className="fixed bottom-6 right-6 z-[9999] max-w-md animate-slide-in">
+                <div className={`p-4 rounded-xl shadow-2xl border-l-4 flex items-center justify-between gap-4 ${message.includes('Error') || message.includes('FAILED')
+                  ? 'bg-red-50 border-red-500 text-red-800 dark:bg-red-900/90 dark:text-red-100'
+                  : 'bg-green-50 border-green-500 text-green-800 dark:bg-green-900/90 dark:text-green-100'
+                  }`}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">
+                      {message.includes('Error') ? '❌' : '✅'}
+                    </span>
+                    <p className="font-semibold text-sm leading-tight">{message}</p>
+                  </div>
+                  <button
+                    onClick={() => setMessage('')}
+                    className="p-1 hover:bg-black/5 rounded-full transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             )}
 
@@ -815,41 +867,71 @@ const Admin: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <div className="relative flex-1 max-w-md">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔍</span>
-                    <input
-                      type="text"
-                      placeholder="Search orders (ID, customer, email)..."
-                      className="pl-10 input-field w-full"
-                      value={searchOrders}
-                      onChange={(e) => setSearchOrders(e.target.value)}
-                    />
+                  <div className="flex flex-wrap items-center gap-4 flex-1">
+                    <div className="relative flex-1 max-w-md">
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔍</span>
+                      <input
+                        type="text"
+                        placeholder="Search orders (ID, customer, email)..."
+                        className="pl-10 input-field w-full"
+                        value={searchOrders}
+                        onChange={(e) => setSearchOrders(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-gray-500 uppercase">Quick Filter:</span>
+                      <select
+                        className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-xs font-medium focus:ring-2 focus:ring-blue-500"
+                        value={orderStatusFilter}
+                        onChange={(e) => setOrderStatusFilter(e.target.value)}
+                      >
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="failed">Failed</option>
+                      </select>
+                    </div>
                   </div>
 
                   {selectedOrders.length > 0 && (
-                    <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg border border-blue-100 dark:border-blue-800">
-                      <span className="text-sm font-medium text-blue-700 dark:text-blue-300 ml-2">
-                        {selectedOrders.length} selected
-                      </span>
-                      <select
-                        className="input-field py-1 text-sm bg-white dark:bg-gray-800 ml-2"
-                        value={bulkStatus}
-                        onChange={(e) => setBulkStatus(e.target.value)}
-                      >
-                        <option value="">Bulk Actions...</option>
-                        <option value="pending">pending</option>
-                        <option value="confirmed">confirmed</option>
-                        <option value="shipped">shipped</option>
-                        <option value="delivered">delivered</option>
-                        <option value="cancelled">cancelled</option>
-                      </select>
-                      <button
-                        onClick={handleBulkStatusUpdate}
-                        disabled={!bulkStatus || loadingOrders}
-                        className="btn-primary py-1 px-4 text-sm"
-                      >
-                        Apply
-                      </button>
+                    <div className="flex flex-col sm:flex-row items-center gap-3 bg-blue-600 p-3 rounded-xl shadow-lg border border-blue-400 animate-pulse-subtle">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-white text-blue-600 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shadow-sm">
+                          {selectedOrders.length}
+                        </span>
+                        <span className="text-sm font-semibold text-white">Orders Selected</span>
+                      </div>
+                      <div className="h-4 w-[1px] bg-blue-400 hidden sm:block mx-1"></div>
+                      <div className="flex flex-1 items-center gap-2">
+                        <select
+                          className="flex-1 min-w-[150px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-none rounded-lg py-1.5 px-3 text-sm font-medium focus:ring-2 focus:ring-blue-300"
+                          value={bulkStatus}
+                          onChange={(e) => setBulkStatus(e.target.value)}
+                        >
+                          <option value="">Choose Status...</option>
+                          <option value="pending">Mark as Pending</option>
+                          <option value="confirmed">Mark as Confirmed</option>
+                          <option value="shipped">Mark as Shipped</option>
+                          <option value="delivered">Mark as Delivered</option>
+                          <option value="cancelled">Mark as Cancelled</option>
+                        </select>
+                        <button
+                          onClick={handleBulkStatusUpdate}
+                          disabled={!bulkStatus || bulkUpdating}
+                          className="bg-white hover:bg-gray-100 text-blue-600 font-bold py-1.5 px-6 rounded-lg text-sm transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95"
+                        >
+                          {bulkUpdating ? 'Updating...' : 'APPLY TO ALL'}
+                        </button>
+                        <button
+                          onClick={() => { setSelectedOrders([]); setBulkStatus(''); }}
+                          className="text-blue-100 hover:text-white text-xs font-medium underline px-2 cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -860,12 +942,15 @@ const Admin: React.FC = () => {
                       <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
                           <th className="px-6 py-3 text-left">
-                            <input
-                              type="checkbox"
-                              className="rounded text-blue-600 focus:ring-blue-500"
-                              onChange={handleSelectAllOrders}
-                              checked={filteredOrders.length > 0 && filteredOrders.every(o => selectedOrders.includes(o.id))}
-                            />
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                onChange={handleSelectAllOrders}
+                                checked={filteredOrders.length > 0 && filteredOrders.every(o => selectedOrders.includes(o.id))}
+                              />
+                              <span className="text-[10px] text-gray-400 uppercase tracking-tighter font-bold">All</span>
+                            </div>
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Order ID</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Customer</th>

@@ -49,16 +49,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   // Load cart from localStorage when user changes
   useEffect(() => {
     const loadCart = async () => {
-      console.log('CartContext: Loading cart for user:', user?.id || 'guest');
       setIsInitialized(false);
       try {
         const cartKey = getCartKey(user?.id);
         const savedCart = localStorage.getItem(cartKey);
-        console.log('CartContext: Raw localStorage data for key', cartKey, ':', savedCart);
 
         if (savedCart && savedCart !== 'undefined' && savedCart !== 'null') {
           const parsedCart = JSON.parse(savedCart);
-          console.log('CartContext: Parsed minimal cart items:', parsedCart);
 
           if (Array.isArray(parsedCart)) {
             // Validate minimal cart items (only productId and quantity)
@@ -73,8 +70,6 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
               }
               return isValid;
             });
-
-            console.log('CartContext: Valid minimal cart items:', validMinimalItems);
 
             // Fetch fresh product data for each item
             const validItems: CartItem[] = [];
@@ -101,14 +96,12 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
               }
             }
 
-            console.log('CartContext: Final cart items with fresh data:', validItems);
             setItems(validItems);
           } else {
             console.warn('CartContext: Cart data is not an array, resetting to empty');
             setItems([]);
           }
         } else {
-          console.log('CartContext: No valid cart data found in localStorage for key:', cartKey);
           setItems([]);
         }
       } catch (error) {
@@ -116,7 +109,6 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         setItems([]);
       } finally {
         setIsInitialized(true);
-        console.log('CartContext: Cart initialization complete for user:', user?.id || 'guest');
       }
     };
 
